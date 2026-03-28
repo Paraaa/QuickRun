@@ -1,5 +1,5 @@
 {
-  "name": "QuickRun",
+  "name": "quickrun",
   "displayName": "QuickRun",
   "description": "Quickly create, save and execute any command",
   "version": "0.0.1",
@@ -13,11 +13,19 @@
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "QuickRun.helloWorld",
-        "title": "Hello World"
-      }
-    ]
+        {
+        "command": "quickrun.executeCommand",
+        "title": "Run Command"
+        }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "quickrunPanel",
+          "name": "Quick Run"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
