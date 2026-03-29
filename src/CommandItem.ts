@@ -12,7 +12,7 @@ export class CommandItem extends vscode.TreeItem {
   }
 
   execute(): void {
-    if (this.data.customCommand) {
+    if (this.data.customCommand.trim()) {
       const terminal = vscode.window.activeTerminal ?? vscode.window.createTerminal('Quick Run');
       terminal.show();
       terminal.sendText(this.data.customCommand, true);

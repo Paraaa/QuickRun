@@ -45,9 +45,6 @@ export class ConfigLoader {
       return;
     }
     this._saving = true;
-    setTimeout(() => {
-      this._saving = false;
-    }, 500);
 
     const config: QuickRunConfig = {
       commands: commands.map(({ source: _s, ...rest }) => rest),
@@ -57,6 +54,11 @@ export class ConfigLoader {
     const dir = path.dirname(this.projectConfigPath);
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(this.projectConfigPath, JSON.stringify(config, null, 2), 'utf-8');
+    // Reset after write completes so the watcher event (which fires shortly after)
+    // is still suppressed, but we don't reset prematurely on a slow write.
+    setTimeout(() => {
+      this._saving = false;
+    }, 200);
   }
 
   loadGlobal(): LoadedData {
@@ -82,6 +84,7 @@ export class ConfigLoader {
     if (!workspaceFolders || !this.projectConfigPath) {
       return;
     }
+    this.watcher?.dispose();
     const pattern = new vscode.RelativePattern(workspaceFolders[0], '.vscode/quickrun.json');
     this.watcher = vscode.workspace.createFileSystemWatcher(pattern);
 

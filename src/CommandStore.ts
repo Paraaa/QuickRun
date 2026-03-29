@@ -12,6 +12,8 @@ export class CommandStore {
   private _onDidChange = new vscode.EventEmitter<void>();
   readonly onDidChange = this._onDidChange.event;
 
+  private _externalChangeSub: vscode.Disposable | undefined;
+
   constructor(private readonly configLoader: ConfigLoader) {}
 
   async load(): Promise<void> {
@@ -24,7 +26,8 @@ export class CommandStore {
     this.globalCommands = global.commands;
     this.globalGroups = global.groups;
 
-    this.configLoader.onDidExternalChange(async () => {
+    this._externalChangeSub?.dispose();
+    this._externalChangeSub = this.configLoader.onDidExternalChange(async () => {
       const reloaded = await this.configLoader.loadProject();
       this.projectCommands = reloaded.commands;
       this.projectGroups = reloaded.groups;

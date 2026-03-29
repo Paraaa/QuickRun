@@ -8,6 +8,9 @@ node_modules/
 # esbuild metafile (if you use --metafile)
 meta.json
 
+# VS Code test runner downloads
+.vscode-test/
+
 # VS Code Extension packaging
 *.vsix
 
