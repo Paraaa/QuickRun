@@ -1,26 +1,23 @@
 import * as vscode from 'vscode';
+import { QuickRunCommand } from './types';
 
 export class CommandItem extends vscode.TreeItem {
-  constructor(
-    public readonly label: string,
-    public readonly customCommand: string,
-    public readonly collapsibleState = vscode.TreeItemCollapsibleState.None,
-  ) {
-    super(label, collapsibleState);
+  constructor(public readonly data: QuickRunCommand) {
+    super(data.label, vscode.TreeItemCollapsibleState.None);
   }
 
   execute(): void {
-    if (this.customCommand) {
+    if (this.data.customCommand) {
       const terminal = vscode.window.activeTerminal ?? vscode.window.createTerminal('Quick Run');
       terminal.show();
-      terminal.sendText(this.customCommand);
+      terminal.sendText(this.data.customCommand);
     } else {
-      vscode.window.showWarningMessage(`No command defined for "${this.label}"`);
+      vscode.window.showWarningMessage(`No command defined for "${this.data.label}"`);
     }
   }
 
   edit(): void {
-    vscode.window.showInformationMessage(`Edit "${this.label}" — coming soon!`);
+    vscode.window.showInformationMessage(`Edit "${this.data.label}" — coming soon!`);
   }
 }
 
@@ -30,8 +27,8 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
 
   // TODO:: Hardcoded for now — replace with config loading later
   private items: CommandItem[] = [
-    new CommandItem('Run server', 'python manage.py runserver'),
-    new CommandItem('Migrate', 'python manage.py migrate'),
+    new CommandItem({ label: 'Run server', customCommand: 'python manage.py runserver' }),
+    new CommandItem({ label: 'Migrate', customCommand: 'python manage.py migrate' }),
   ];
 
   getTreeItem(element: CommandItem): vscode.TreeItem {
@@ -46,14 +43,14 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
     this._onDidChangeTreeData.fire(undefined);
   }
 
-  addCommand(label: string, cmd: string, icon: string): void {
-    this.items.push(new CommandItem(label, cmd));
+  addCommand(data: QuickRunCommand): void {
+    this.items.push(new CommandItem(data));
     this.refresh();
   }
 
   async deleteCommand(commandItem: CommandItem): Promise<void> {
     const confirm = await vscode.window.showWarningMessage(
-      `Are you sure you want to delete "${commandItem.label}"?`,
+      `Are you sure you want to delete "${commandItem.data.label}"?`,
       { modal: true },
       'Delete',
     );

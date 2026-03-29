@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CommandItem, CommandsProvider } from './CommandsProvider';
 import { AddCommandPanel } from './AddCommandPanel';
+import { QuickRunCommand } from './types';
 
 export function activate(context: vscode.ExtensionContext) {
   const commandsProvider = new CommandsProvider();
@@ -9,8 +10,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   const commands: Record<string, (...args: any[]) => void> = {
     'quickrun.addCommand': () => {
-      AddCommandPanel.open(context, (label, cmd, icon) => {
-        commandsProvider.addCommand(label, cmd, icon);
+      AddCommandPanel.open(context, (data: QuickRunCommand) => {
+        commandsProvider.addCommand(data);
       });
     },
     'quickrun.refreshCommands': () => commandsProvider.refresh(),
@@ -22,7 +23,6 @@ export function activate(context: vscode.ExtensionContext) {
       commandsProvider.deleteCommand(commandItem),
   };
 
-  // Register all commands and push disposables
   const disposables = Object.entries(commands).map(([command, callback]) =>
     vscode.commands.registerCommand(command, callback),
   );

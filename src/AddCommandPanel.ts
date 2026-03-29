@@ -1,14 +1,12 @@
 import * as vscode from 'vscode';
+import { QuickRunCommand } from './types';
 
 export class AddCommandPanel {
   private static currentPanel: AddCommandPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
 
-  static open(
-    context: vscode.ExtensionContext,
-    onSubmit: (label: string, cmd: string, icon: string) => void,
-  ): void {
+  static open(context: vscode.ExtensionContext, onSubmit: (data: QuickRunCommand) => void): void {
     if (AddCommandPanel.currentPanel) {
       AddCommandPanel.currentPanel.panel.reveal();
       return;
@@ -16,10 +14,7 @@ export class AddCommandPanel {
     AddCommandPanel.currentPanel = new AddCommandPanel(context, onSubmit);
   }
 
-  private constructor(
-    context: vscode.ExtensionContext,
-    onSubmit: (label: string, cmd: string, icon: string) => void,
-  ) {
+  private constructor(context: vscode.ExtensionContext, onSubmit: (data: QuickRunCommand) => void) {
     this.panel = vscode.window.createWebviewPanel(
       'quickrunAddCommand',
       'Add Command',
@@ -34,7 +29,7 @@ export class AddCommandPanel {
       (message) => {
         switch (message.type) {
           case 'submit':
-            onSubmit(message.label, message.cmd, message.icon);
+            onSubmit({ label: message.label, customCommand: message.cmd });
             this.panel.dispose();
             break;
           case 'cancel':
@@ -143,10 +138,6 @@ export class AddCommandPanel {
           <input id="cmd" type="text" placeholder="e.g. python manage.py runserver"/>
           <span class="error-msg" id="cmd-error">Command is required</span>
         </div>
-        <div class="field">
-          <label for="icon">Icon <span style="opacity:0.5">(codicon name, optional)</span></label>
-          <input id="icon" type="text" placeholder="e.g. play, zap, terminal"/>
-        </div>
         <div class="actions">
           <button class="btn-primary" onclick="submit()">Add Command</button>
           <button class="btn-secondary" onclick="cancel()">Cancel</button>
@@ -189,7 +180,6 @@ export class AddCommandPanel {
               type: 'submit',
               label: document.getElementById('label').value.trim(),
               cmd: document.getElementById('cmd').value.trim(),
-              icon: document.getElementById('icon').value.trim() || 'play',
             });
           }
 
