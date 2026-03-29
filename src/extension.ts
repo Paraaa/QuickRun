@@ -36,7 +36,6 @@ export function activate(context: vscode.ExtensionContext) {
 
   const commands: Record<string, (...args: any[]) => void> = {
     'quickrun.addCommand': (groupItem?: GroupItem) => {
-      console.log('Group item from context (if any):', groupItem);
       CommandPanel.open(
         context,
         undefined,
