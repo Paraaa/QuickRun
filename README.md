@@ -31,14 +31,28 @@ Save and run any terminal command from the VS Code sidebar. No more retyping lon
 
 ## Commands
 
-| Action | How |
+**Panel toolbar** (icons at the top of the Quick Run panel):
+
+| Button | Action |
 |---|---|
-| Add command | Toolbar `+` button or right-click a group → Add Command |
-| Edit command | Right-click a command → Edit |
-| Delete command | Right-click a command → Delete |
-| Add group | Toolbar `Add Group` button -a scope picker appears first |
-| Delete group | Right-click a group → Delete Group |
-| Refresh panel | Toolbar `Refresh` button |
+| `+` (Add Command) | Open the Add Command form |
+| Add Group | Choose a scope then enter a group name |
+| Refresh | Force-reload the panel |
+
+**Hover over a command** to reveal inline action buttons:
+
+| Button | Action |
+|---|---|
+| Play | Run the command in the terminal |
+| Edit | Open the Edit Command form |
+| Trash | Delete the command (with confirmation) |
+
+**Hover over a group** to reveal inline action buttons:
+
+| Button | Action |
+|---|---|
+| `+` (Add Command) | Add a command directly into that group |
+| Trash | Delete the group and all its commands (with confirmation) |
 
 ## Scopes
 
@@ -55,41 +69,86 @@ The panel shows a `project` or `global` badge next to each item so you always kn
 
 ```json
 "quickrun.global": {
-  "commands": [
+  "groups": [
     {
-      "id": "...",
-      "label": "Docker PS",
-      "customCommand": "docker ps",
+      "id": "docker-group",
+      "label": "Docker",
       "icon": "server"
     }
   ],
-  "groups": []
-}
-```
-
-## Project config file
-
-`.vscode/quickrun.json` is created automatically when you save your first project-scoped command. Example:
-
-```json
-{
   "commands": [
     {
       "id": "a1b2c3d4-...",
-      "label": "Run server",
-      "customCommand": "python manage.py runserver",
+      "label": "Compose up",
+      "customCommand": "docker compose up -d",
       "icon": "play",
-      "groupId": "django-group-id"
-    }
-  ],
-  "groups": [
+      "groupId": "docker-group"
+    },
     {
-      "id": "django-group-id",
-      "label": "Django",
-      "icon": "server"
+      "id": "b2c3d4e5-...",
+      "label": "Compose down",
+      "customCommand": "docker compose down",
+      "icon": "stop",
+      "groupId": "docker-group"
+    },
+    {
+      "id": "c3d4e5f6-...",
+      "label": "List containers",
+      "customCommand": "docker ps",
+      "icon": "list-ordered",
+      "groupId": "docker-group"
     }
   ]
 }
 ```
 
-Commit this file to share commands with your team.
+## Project config file
+
+`.vscode/quickrun.json` is created automatically when you save your first project-scoped command. Commit this file to share commands with your team.
+
+```json
+{
+  "groups": [
+    {
+      "id": "dev-group",
+      "label": "Dev",
+      "icon": "code"
+    },
+    {
+      "id": "db-group",
+      "label": "Database",
+      "icon": "database"
+    }
+  ],
+  "commands": [
+    {
+      "id": "d4e5f6g7-...",
+      "label": "Run server",
+      "customCommand": "python manage.py runserver",
+      "icon": "play",
+      "groupId": "dev-group"
+    },
+    {
+      "id": "e5f6g7h8-...",
+      "label": "Run tests",
+      "customCommand": "python manage.py test",
+      "icon": "beaker",
+      "groupId": "dev-group"
+    },
+    {
+      "id": "f6g7h8i9-...",
+      "label": "Migrate",
+      "customCommand": "python manage.py migrate",
+      "icon": "database",
+      "groupId": "db-group"
+    },
+    {
+      "id": "g7h8i9j0-...",
+      "label": "Make migrations",
+      "customCommand": "python manage.py makemigrations",
+      "icon": "git-commit",
+      "groupId": "db-group"
+    }
+  ]
+}
+```
