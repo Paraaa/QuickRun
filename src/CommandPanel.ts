@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import { escapeHtml } from './utils';
+import { ALLICONS, escapeHtml } from './utils';
 import { QuickRunCommand, QuickRunGroup } from './types';
 import { GroupItem } from './GroupItem';
+import { ALL } from 'dns';
 export class CommandPanel {
   private static currentPanel: CommandPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
@@ -18,11 +19,17 @@ export class CommandPanel {
       CommandPanel.currentPanel.panel.reveal();
       return;
     }
-    CommandPanel.currentPanel = new CommandPanel(context, existing, groups, groupItem, onSubmit);
+    CommandPanel.currentPanel = new CommandPanel(
+      context.extensionUri,
+      existing,
+      groups,
+      groupItem,
+      onSubmit,
+    );
   }
 
   private constructor(
-    context: vscode.ExtensionContext,
+    private readonly extensionUri: vscode.Uri,
     existing: QuickRunCommand | undefined,
     groups: QuickRunGroup[],
     groupItem: GroupItem | undefined,
@@ -32,10 +39,13 @@ export class CommandPanel {
       'quickrunAddCommand',
       existing ? 'Edit Command' : 'Add Command',
       vscode.ViewColumn.One,
-      { enableScripts: true },
+      {
+        enableScripts: true,
+        localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'node_modules')],
+      },
     );
 
-    this.panel.webview.html = this.getHtml(groups, groupItem, existing);
+    this.panel.webview.html = this.getHtml(this.panel.webview, groups, groupItem, existing);
 
     // Handle messages from the webview
     this.panel.webview.onDidReceiveMessage(
@@ -47,7 +57,8 @@ export class CommandPanel {
             onSubmit({
               id: id ?? '',
               label: message.label,
-              customCommand: message.cmd,
+              customCommand: message.customCommand,
+              icon: message?.icon || 'play',
               groupId: message?.groupId || undefined,
             });
             this.panel.dispose();
@@ -90,20 +101,50 @@ export class CommandPanel {
   }
 
   private getHtml(
+    webview: vscode.Webview,
     groups: QuickRunGroup[],
     groupItem?: GroupItem,
     existing?: QuickRunCommand,
   ): string {
+    // Load codicon font from node_modules
+    const codiconsUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(
+        this.extensionUri,
+        'node_modules',
+        '@vscode/codicons',
+        'dist',
+        'codicon.css',
+      ),
+    );
+
     const groupOptions = this.getGroupsHtml(groups, groupItem, existing);
 
     const escapedLabel = existing ? escapeHtml(existing.label) : '';
     const escapedCommand = existing ? escapeHtml(existing.customCommand) : '';
+    const selectedIcon = existing?.icon ?? 'play'; // TODO: Add icon item
+
+    const iconGrid = ALLICONS.map(
+      (name) => `
+    <div class="icon-item ${name === selectedIcon ? 'selected' : ''}"
+         data-icon="${name}"
+         title="${name}"
+         onclick="selectIcon('${name}')">
+      <i class="codicon codicon-${name}"></i>
+    </div>
+  `,
+    ).join('');
 
     return /* html */ `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8"/>
+        <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none';
+                 font-src ${webview.cspSource};
+                 style-src ${webview.cspSource} 'unsafe-inline';
+                 script-src 'unsafe-inline';">
+        <link href="${codiconsUri}" rel="stylesheet"/>
         <style>
           body {
             padding: 20px;
@@ -171,6 +212,50 @@ export class CommandPanel {
             gap: 8px;
             margin-top: 24px;
           }
+                    /* Icon picker */
+        .icon-search {
+          margin-bottom: 8px;
+        }
+        .icon-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+          gap: 4px;
+          max-height: 180px;
+          overflow-y: auto;
+          padding: 4px;
+          background: var(--vscode-input-background);
+          border: 1px solid var(--vscode-input-border, transparent);
+          border-radius: 2px;
+        }
+            .icon-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-size: 16px;
+            }
+            .icon-item:hover {
+            background: var(--vscode-list-hoverBackground);
+            border-color: var(--vscode-focusBorder);
+            }
+            .icon-item.selected {
+            background: var(--vscode-list-activeSelectionBackground);
+            color: var(--vscode-list-activeSelectionForeground);
+            border-color: var(--vscode-focusBorder);
+            }
+            .icon-preview {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            }
+            .icon-preview i { font-size: 16px; }
           button {
             padding: 6px 14px;
             font-size: 13px;
@@ -195,6 +280,21 @@ export class CommandPanel {
         </style>
       </head>
       <body>
+        <div class="field">
+            <label>Icon</label>
+            <input class="icon-search" type="text"
+                placeholder="Search icons..."
+                oninput="filterIcons(this.value)"/>
+            <div class="icon-grid" id="icon-grid">
+            ${iconGrid}
+            </div>
+            <div class="icon-preview">
+            <i class="codicon codicon-${selectedIcon}" id="preview-icon"></i>
+            <span id="preview-label">${selectedIcon}</span>
+            </div>
+            <input type="hidden" id="icon" value="${selectedIcon}"/>
+        </div>
+
         <div class="field">
           <label for="label">Label</label>
           <input id="label" type="text" placeholder="e.g. Run server" value="${escapedLabel}" autofocus/>
@@ -222,13 +322,33 @@ export class CommandPanel {
         <script>
           const vscode = acquireVsCodeApi();
 
+            function selectIcon(name) {
+          // Deselect previous
+          document.querySelectorAll('.icon-item.selected')
+            .forEach(el => el.classList.remove('selected'));
+
+          // Select new
+          const el = document.querySelector(\`[data-icon="\${name}"]\`);
+          if (el) el.classList.add('selected');
+
+          // Update hidden input and preview
+          document.getElementById('icon').value = name;
+          document.getElementById('preview-icon').className = \`codicon codicon-\${name}\`;
+          document.getElementById('preview-label').textContent = name;
+             }
+
+            function filterIcons(query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll('.icon-item').forEach(el => {
+                const name = el.dataset.icon;
+                el.style.display = name.includes(q) ? 'flex' : 'none';
+            });
+            }
+
           function validate() {
             let valid = true;
             const label = document.getElementById('label');
             const cmd = document.getElementById('cmd');
-            const group = document.getElementById('group');
-            console.log("🚀 ~ CommandPanel ~ getHtml ~ group:", group.value)
-
             const labelError = document.getElementById('label-error');
             const cmdError = document.getElementById('cmd-error');
 
@@ -258,7 +378,8 @@ export class CommandPanel {
             vscode.postMessage({
               type: 'submit',
               label: document.getElementById('label').value.trim(),
-              cmd: document.getElementById('cmd').value.trim(),
+              customCommand: document.getElementById('cmd').value.trim(),
+              icon: document.getElementById('icon').value,
               groupId: document.getElementById('group').value || undefined,
             });
           }

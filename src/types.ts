@@ -2,6 +2,7 @@ export interface QuickRunCommand {
   id?: string;
   label: string;
   customCommand: string;
+  icon?: string;
   groupId?: string;
 }
 

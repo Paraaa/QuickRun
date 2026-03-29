@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   commandStore.add({
     label: 'Test command',
-    customCommand: 'echo "Hello World!"',
+    customCommand: 'echo "Hello World\\!"',
     groupId: 'general',
   });
 

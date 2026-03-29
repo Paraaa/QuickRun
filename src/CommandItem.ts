@@ -6,13 +6,15 @@ export class CommandItem extends vscode.TreeItem {
     super(data.label, vscode.TreeItemCollapsibleState.None);
     this.contextValue = 'commandItem';
     this.id = data.id;
+    this.iconPath = new vscode.ThemeIcon(data.icon || 'play');
+    this.tooltip = data.customCommand;
   }
 
   execute(): void {
     if (this.data.customCommand) {
       const terminal = vscode.window.activeTerminal ?? vscode.window.createTerminal('Quick Run');
       terminal.show();
-      terminal.sendText(this.data.customCommand);
+      terminal.sendText(this.data.customCommand, true);
     } else {
       vscode.window.showWarningMessage(`No command defined for "${this.data.label}"`);
     }
