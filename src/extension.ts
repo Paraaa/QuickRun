@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { CommandItem, CommandsProvider } from './CommandsProvider';
+import { AddCommandPanel } from './AddCommandPanel';
 
 export function activate(context: vscode.ExtensionContext) {
   const commandsProvider = new CommandsProvider();
@@ -7,7 +8,11 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.window.registerTreeDataProvider('quickrunPanel', commandsProvider);
 
   const commands: Record<string, (...args: any[]) => void> = {
-    'quickrun.addCommand': () => commandsProvider.addCommand(),
+    'quickrun.addCommand': () => {
+      AddCommandPanel.open(context, (label, cmd, icon) => {
+        commandsProvider.addCommand(label, cmd, icon);
+      });
+    },
     'quickrun.refreshCommands': () => commandsProvider.refresh(),
 
     // These will receive the CommandItem as an argument from the view's context as we set up in package.json with "view/item/context"

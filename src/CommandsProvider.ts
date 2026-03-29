@@ -3,17 +3,17 @@ import * as vscode from 'vscode';
 export class CommandItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
-    public readonly command?: vscode.Command,
+    public readonly customCommand: string,
     public readonly collapsibleState = vscode.TreeItemCollapsibleState.None,
   ) {
     super(label, collapsibleState);
   }
 
   execute(): void {
-    if (this.command) {
+    if (this.customCommand) {
       const terminal = vscode.window.activeTerminal ?? vscode.window.createTerminal('Quick Run');
       terminal.show();
-      terminal.sendText(this.command?.arguments?.[0] ?? '');
+      terminal.sendText(this.customCommand);
     } else {
       vscode.window.showWarningMessage(`No command defined for "${this.label}"`);
     }
@@ -28,18 +28,10 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<CommandItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  // Hardcoded for now — replace with config loading later
+  // TODO:: Hardcoded for now — replace with config loading later
   private items: CommandItem[] = [
-    new CommandItem('Run server', {
-      title: 'Run server',
-      command: 'quickrun.executeCommand',
-      arguments: ['python manage.py runserver'],
-    }),
-    new CommandItem('Migrate', {
-      title: 'Migrate',
-      command: 'quickrun.executeCommand',
-      arguments: ['python manage.py migrate'],
-    }),
+    new CommandItem('Run server', 'python manage.py runserver'),
+    new CommandItem('Migrate', 'python manage.py migrate'),
   ];
 
   getTreeItem(element: CommandItem): vscode.TreeItem {
@@ -54,8 +46,9 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
     this._onDidChangeTreeData.fire(undefined);
   }
 
-  addCommand(): void {
-    vscode.window.showInformationMessage('Add command — coming soon!');
+  addCommand(label: string, cmd: string, icon: string): void {
+    this.items.push(new CommandItem(label, cmd));
+    this.refresh();
   }
 
   async deleteCommand(commandItem: CommandItem): Promise<void> {
