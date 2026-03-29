@@ -3,6 +3,24 @@
   "displayName": "QuickRun",
   "description": "Quickly create, save and execute any command",
   "version": "0.0.1",
+  "publisher": "andrejschwanke",
+  "license": "MIT",
+  "icon": "assets/icon.png",
+  "homepage": "https://github.com/Paraaa/QuickRun#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Paraaa/QuickRun"
+  },
+  "bugs": {
+    "url": "https://github.com/Paraaa/QuickRun/issues"
+  },
+  "keywords": [
+    "commands",
+    "terminal",
+    "run",
+    "shortcuts",
+    "productivity"
+  ],
   "engines": {
     "vscode": "^1.110.0"
   },
@@ -119,20 +137,36 @@
         "quickrun.global": {
           "type": "object",
           "description": "Global QuickRun commands and groups stored in VS Code settings, available across all workspaces.",
-          "default": { "commands": [], "groups": [] },
+          "default": {
+            "commands": [],
+            "groups": []
+          },
           "properties": {
             "commands": {
               "type": "array",
               "description": "Global commands available in all workspaces.",
               "items": {
                 "type": "object",
-                "required": ["label", "customCommand"],
+                "required": [
+                  "label",
+                  "customCommand"
+                ],
                 "properties": {
-                  "id":            { "type": "string" },
-                  "label":         { "type": "string" },
-                  "customCommand": { "type": "string" },
-                  "icon":          { "type": "string" },
-                  "groupId":       { "type": "string" }
+                  "id": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "customCommand": {
+                    "type": "string"
+                  },
+                  "icon": {
+                    "type": "string"
+                  },
+                  "groupId": {
+                    "type": "string"
+                  }
                 }
               }
             },
@@ -141,11 +175,19 @@
               "description": "Global groups available in all workspaces.",
               "items": {
                 "type": "object",
-                "required": ["label"],
+                "required": [
+                  "label"
+                ],
                 "properties": {
-                  "id":    { "type": "string" },
-                  "label": { "type": "string" },
-                  "icon":  { "type": "string" }
+                  "id": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "icon": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -166,7 +208,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "publish:ovsx": "ovsx publish -p $OVSX_TOKEN"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -174,6 +217,7 @@
     "@types/vscode": "^1.110.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
+    "dotenv-cli": "^11.0.0",
     "esbuild": "^0.27.3",
     "eslint": "^9.39.3",
     "npm-run-all": "^4.1.5",
