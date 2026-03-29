@@ -112,6 +112,46 @@
           "group": "inline@2"
         }
       ]
+    },
+    "configuration": {
+      "title": "QuickRun",
+      "properties": {
+        "quickrun.global": {
+          "type": "object",
+          "description": "Global QuickRun commands and groups stored in VS Code settings, available across all workspaces.",
+          "default": { "commands": [], "groups": [] },
+          "properties": {
+            "commands": {
+              "type": "array",
+              "description": "Global commands available in all workspaces.",
+              "items": {
+                "type": "object",
+                "required": ["label", "customCommand"],
+                "properties": {
+                  "id":            { "type": "string" },
+                  "label":         { "type": "string" },
+                  "customCommand": { "type": "string" },
+                  "icon":          { "type": "string" },
+                  "groupId":       { "type": "string" }
+                }
+              }
+            },
+            "groups": {
+              "type": "array",
+              "description": "Global groups available in all workspaces.",
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "properties": {
+                  "id":    { "type": "string" },
+                  "label": { "type": "string" },
+                  "icon":  { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "scripts": {

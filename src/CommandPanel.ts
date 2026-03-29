@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ALLICONS, escapeHtml } from './utils';
 import { QuickRunCommand, QuickRunGroup } from './types';
 import { GroupItem } from './GroupItem';
-import { ALL } from 'dns';
+
 export class CommandPanel {
   private static currentPanel: CommandPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
@@ -47,12 +47,10 @@ export class CommandPanel {
 
     this.panel.webview.html = this.getHtml(this.panel.webview, groups, groupItem, existing);
 
-    // Handle messages from the webview
     this.panel.webview.onDidReceiveMessage(
       (message) => {
         switch (message.type) {
-          case 'submit':
-            // Always preserve the id when editing, only leave undefined for new commands
+          case 'submit': {
             const id = existing ? existing.id : undefined;
             onSubmit({
               id: id ?? '',
@@ -60,9 +58,11 @@ export class CommandPanel {
               customCommand: message.customCommand,
               icon: message?.icon || 'play',
               groupId: message?.groupId || undefined,
+              source: existing ? existing.source : (message.source ?? 'project'),
             });
             this.panel.dispose();
             break;
+          }
           case 'cancel':
             this.panel.dispose();
             break;
@@ -106,7 +106,6 @@ export class CommandPanel {
     groupItem?: GroupItem,
     existing?: QuickRunCommand,
   ): string {
-    // Load codicon font from node_modules
     const codiconsUri = webview.asWebviewUri(
       vscode.Uri.joinPath(
         this.extensionUri,
@@ -121,7 +120,7 @@ export class CommandPanel {
 
     const escapedLabel = existing ? escapeHtml(existing.label) : '';
     const escapedCommand = existing ? escapeHtml(existing.customCommand) : '';
-    const selectedIcon = existing?.icon ?? 'play'; // TODO: Add icon item
+    const selectedIcon = existing?.icon ?? 'play';
 
     const iconGrid = ALLICONS.map(
       (name) => `
@@ -133,6 +132,17 @@ export class CommandPanel {
     </div>
   `,
     ).join('');
+
+    const scopeField = !existing
+      ? `
+        <div class="field">
+          <label for="scope">Save to</label>
+          <select id="scope">
+            <option value="project" selected>Project (.vscode/quickrun.json)</option>
+            <option value="global">Global (settings.json)</option>
+          </select>
+        </div>`
+      : '';
 
     return /* html */ `
       <!DOCTYPE html>
@@ -189,7 +199,7 @@ export class CommandPanel {
             outline: none;
             width: 100%;
             cursor: pointer;
-            appearance: none;   /* ← removes OS default styling */
+            appearance: none;
            }
 
            select:focus {
@@ -212,7 +222,6 @@ export class CommandPanel {
             gap: 8px;
             margin-top: 24px;
           }
-                    /* Icon picker */
         .icon-search {
           margin-bottom: 8px;
         }
@@ -312,6 +321,7 @@ export class CommandPanel {
             ${groupOptions}
           </select>
         </div>
+        ${scopeField}
         <div class="actions">
           <button class="btn-primary" onclick="submit()">
                 ${existing ? 'Save Changes' : 'Add Command'}
@@ -323,15 +333,12 @@ export class CommandPanel {
           const vscode = acquireVsCodeApi();
 
             function selectIcon(name) {
-          // Deselect previous
           document.querySelectorAll('.icon-item.selected')
             .forEach(el => el.classList.remove('selected'));
 
-          // Select new
           const el = document.querySelector(\`[data-icon="\${name}"]\`);
           if (el) el.classList.add('selected');
 
-          // Update hidden input and preview
           document.getElementById('icon').value = name;
           document.getElementById('preview-icon').className = \`codicon codicon-\${name}\`;
           document.getElementById('preview-label').textContent = name;
@@ -375,12 +382,14 @@ export class CommandPanel {
 
           function submit() {
             if (!validate()) return;
+            const scopeEl = document.getElementById('scope');
             vscode.postMessage({
               type: 'submit',
               label: document.getElementById('label').value.trim(),
               customCommand: document.getElementById('cmd').value.trim(),
               icon: document.getElementById('icon').value,
               groupId: document.getElementById('group').value || undefined,
+              source: scopeEl ? scopeEl.value : undefined,
             });
           }
 
@@ -388,7 +397,6 @@ export class CommandPanel {
             vscode.postMessage({ type: 'cancel' });
           }
 
-          // Submit on Enter
           document.addEventListener('keydown', e => {
             if (e.key === 'Enter') submit();
             if (e.key === 'Escape') cancel();

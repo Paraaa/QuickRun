@@ -7,6 +7,7 @@ export class GroupItem extends vscode.TreeItem {
     super(data.label, vscode.TreeItemCollapsibleState.Expanded);
     this.iconPath = new vscode.ThemeIcon(data.icon ?? 'folder');
     this.contextValue = 'group';
+    this.description = data.source === 'global' ? 'global' : 'project';
     this.id = data.id;
   }
 }

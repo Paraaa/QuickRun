@@ -8,6 +8,7 @@ export class CommandItem extends vscode.TreeItem {
     this.id = data.id;
     this.iconPath = new vscode.ThemeIcon(data.icon || 'play');
     this.tooltip = data.customCommand;
+    this.description = data.source === 'global' ? 'global' : 'project';
   }
 
   execute(): void {

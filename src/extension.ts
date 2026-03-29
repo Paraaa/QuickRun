@@ -3,70 +3,72 @@ import { CommandsProvider } from './CommandsProvider';
 import { CommandItem } from './CommandItem';
 import { CommandPanel } from './CommandPanel';
 import { CommandStore } from './CommandStore';
-import { QuickRunCommand } from './types';
+import { ConfigLoader } from './ConfigLoader';
+import { QuickRunCommand, ConfigScope } from './types';
 import { GroupItem } from './GroupItem';
 
-export function activate(context: vscode.ExtensionContext) {
-  const commandStore = new CommandStore();
+export async function activate(context: vscode.ExtensionContext) {
+  const configLoader = new ConfigLoader(context);
+  const commandStore = new CommandStore(configLoader);
 
-  // TODO:: Hardcoded for now — replace with config loading later and move to constructor of CommandStore
-  commandStore.addGroup({ label: 'Django', id: 'django' });
-  commandStore.addGroup({ label: 'General', id: 'general' });
-  commandStore.add({
-    label: 'Run server',
-    customCommand: 'python manage.py runserver',
-    groupId: 'django',
-  });
+  await commandStore.load();
 
-  commandStore.add({
-    label: 'Migrate',
-    customCommand: 'python manage.py migrate',
-    groupId: 'django',
-  });
-
-  commandStore.add({
-    label: 'Test command',
-    customCommand: 'echo "Hello World\\!"',
-    groupId: 'general',
-  });
+  configLoader.watchProject();
 
   const commandsProvider = new CommandsProvider(commandStore);
-
   vscode.window.registerTreeDataProvider('quickrunPanel', commandsProvider);
 
-  const commands: Record<string, (...args: any[]) => void> = {
+  const commands: Record<string, (...args: any[]) => void | Promise<void>> = {
     'quickrun.addCommand': (groupItem?: GroupItem) => {
       CommandPanel.open(
         context,
         undefined,
         commandStore.getGroups(),
         groupItem,
-        (data: QuickRunCommand) => {
-          commandStore.add(data);
-        },
+        (data: QuickRunCommand) => commandStore.add(data),
       );
     },
+
     'quickrun.refreshCommands': () => commandsProvider.refresh(),
+
     'quickrun.addGroup': async () => {
+      const scopePick = await vscode.window.showQuickPick(
+        [
+          {
+            label: 'Project',
+            description: '.vscode/quickrun.json',
+            value: 'project' as ConfigScope,
+          },
+          {
+            label: 'Global',
+            description: 'settings.json',
+            value: 'global' as ConfigScope,
+          },
+        ],
+        { title: 'Add Group - Choose Scope', placeHolder: 'Where should this group be stored?' },
+      );
+      if (!scopePick) {
+        return;
+      }
       const groupName = await vscode.window.showInputBox({ prompt: 'Enter group name' });
       if (groupName) {
-        commandStore.addGroup({ label: groupName });
+        await commandStore.addGroup({ label: groupName, source: scopePick.value });
       }
     },
+
     'quickrun.deleteGroup': (groupItem: GroupItem) => commandStore.deleteGroup(groupItem.data),
 
-    // These will receive the CommandItem as an argument from the view's context as we set up in package.json with "view/item/context"
     'quickrun.executeCommand': (commandItem: CommandItem) => commandItem.execute(),
+
     'quickrun.editCommand': (commandItem: CommandItem) =>
       CommandPanel.open(
         context,
         commandItem.data,
         commandStore.getGroups(),
         undefined,
-        (data: QuickRunCommand) => {
-          commandStore.edit(commandItem.data.id, data);
-        },
+        (data: QuickRunCommand) => commandStore.edit(commandItem.data.id, data),
       ),
+
     'quickrun.deleteCommand': (commandItem: CommandItem) => commandStore.delete(commandItem.data),
   };
 
@@ -75,6 +77,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(...disposables);
+  context.subscriptions.push(configLoader);
 }
 
 export function deactivate() {}
