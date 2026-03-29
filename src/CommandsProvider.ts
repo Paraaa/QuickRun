@@ -4,10 +4,27 @@ export class CommandItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly command?: vscode.Command,
-    public readonly collapsibleState = vscode.TreeItemCollapsibleState.None
+    public readonly collapsibleState = vscode.TreeItemCollapsibleState.None,
   ) {
     super(label, collapsibleState);
-    this.iconPath = new vscode.ThemeIcon('run');
+  }
+
+  execute(): void {
+    if (this.command) {
+      const terminal = vscode.window.activeTerminal ?? vscode.window.createTerminal('Quick Run');
+      terminal.show();
+      terminal.sendText(this.command?.arguments?.[0] ?? '');
+    } else {
+      vscode.window.showWarningMessage(`No command defined for "${this.label}"`);
+    }
+  }
+
+  edit(): void {
+    vscode.window.showInformationMessage(`Edit "${this.label}" — coming soon!`);
+  }
+
+  delete(): void {
+    vscode.window.showInformationMessage(`Delete "${this.label}" — coming soon!`);
   }
 }
 
@@ -20,12 +37,12 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
     new CommandItem('Run server', {
       title: 'Run server',
       command: 'quickrun.executeCommand',
-      arguments: ['python manage.py runserver']
+      arguments: ['python manage.py runserver'],
     }),
     new CommandItem('Migrate', {
       title: 'Migrate',
       command: 'quickrun.executeCommand',
-      arguments: ['python manage.py migrate']
+      arguments: ['python manage.py migrate'],
     }),
   ];
 
@@ -39,5 +56,9 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
 
   refresh(): void {
     this._onDidChangeTreeData.fire(undefined);
+  }
+
+  addCommand(): void {
+    vscode.window.showInformationMessage('Add command — coming soon!');
   }
 }
