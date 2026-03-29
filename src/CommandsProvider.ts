@@ -22,10 +22,6 @@ export class CommandItem extends vscode.TreeItem {
   edit(): void {
     vscode.window.showInformationMessage(`Edit "${this.label}" — coming soon!`);
   }
-
-  delete(): void {
-    vscode.window.showInformationMessage(`Delete "${this.label}" — coming soon!`);
-  }
 }
 
 export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
@@ -60,5 +56,17 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
 
   addCommand(): void {
     vscode.window.showInformationMessage('Add command — coming soon!');
+  }
+
+  async deleteCommand(commandItem: CommandItem): Promise<void> {
+    const confirm = await vscode.window.showWarningMessage(
+      `Are you sure you want to delete "${commandItem.label}"?`,
+      { modal: true },
+      'Delete',
+    );
+    if (confirm === 'Delete') {
+      this.items = this.items.filter((item) => item !== commandItem);
+      this.refresh();
+    }
   }
 }

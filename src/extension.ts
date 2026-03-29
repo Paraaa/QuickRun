@@ -2,18 +2,19 @@ import * as vscode from 'vscode';
 import { CommandItem, CommandsProvider } from './CommandsProvider';
 
 export function activate(context: vscode.ExtensionContext) {
-  const provider = new CommandsProvider();
+  const commandsProvider = new CommandsProvider();
 
-  vscode.window.registerTreeDataProvider('quickrunPanel', provider);
+  vscode.window.registerTreeDataProvider('quickrunPanel', commandsProvider);
 
   const commands: Record<string, (...args: any[]) => void> = {
-    'quickrun.addCommand': () => provider.addCommand(),
-    'quickrun.refreshCommands': () => provider.refresh(),
+    'quickrun.addCommand': () => commandsProvider.addCommand(),
+    'quickrun.refreshCommands': () => commandsProvider.refresh(),
 
     // These will receive the CommandItem as an argument from the view's context as we set up in package.json with "view/item/context"
     'quickrun.executeCommand': (commandItem: CommandItem) => commandItem.execute(),
     'quickrun.editCommand': (commandItem: CommandItem) => commandItem.edit(),
-    'quickrun.deleteCommand': (commandItem: CommandItem) => commandItem.delete(),
+    'quickrun.deleteCommand': (commandItem: CommandItem) =>
+      commandsProvider.deleteCommand(commandItem),
   };
 
   // Register all commands and push disposables
