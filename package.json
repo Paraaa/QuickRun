@@ -37,6 +37,16 @@
         "command": "quickrun.deleteCommand",
         "title": "Delete Command",
         "icon": "$(trash)"
+      },
+      {
+        "command": "quickrun.deleteGroup",
+        "title": "Delete Group",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "quickrun.addGroup",
+        "title": "Add Group",
+        "icon": "$(file-add)"
       }
     ],
     "viewsContainers": {
@@ -65,26 +75,41 @@
           "group": "navigation@1"
         },
         {
-          "command": "quickrun.refreshCommands",
+          "command": "quickrun.addGroup",
           "when": "view == quickrunPanel",
           "group": "navigation@2"
+        },
+        {
+          "command": "quickrun.refreshCommands",
+          "when": "view == quickrunPanel",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
         {
           "command": "quickrun.executeCommand",
-          "when": "view == quickrunPanel",
+          "when": "view == quickrunPanel && viewItem == commandItem",
           "group": "inline@1"
         },
         {
           "command": "quickrun.editCommand",
-          "when": "view == quickrunPanel",
+          "when": "view == quickrunPanel && viewItem == commandItem",
           "group": "inline@2"
         },
         {
           "command": "quickrun.deleteCommand",
-          "when": "view == quickrunPanel",
+          "when": "view == quickrunPanel && viewItem == commandItem",
           "group": "inline@3"
+        },
+        {
+          "command": "quickrun.addCommand",
+          "when": "view == quickrunPanel && viewItem == group",
+          "group": "inline@1"
+        },
+        {
+          "command": "quickrun.deleteGroup",
+          "when": "view == quickrunPanel && viewItem == group",
+          "group": "inline@2"
         }
       ]
     }

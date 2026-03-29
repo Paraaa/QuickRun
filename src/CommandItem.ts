@@ -4,6 +4,8 @@ import { QuickRunCommand } from './types';
 export class CommandItem extends vscode.TreeItem {
   constructor(public readonly data: QuickRunCommand) {
     super(data.label, vscode.TreeItemCollapsibleState.None);
+    this.contextValue = 'commandItem';
+    this.id = data.id;
   }
 
   execute(): void {

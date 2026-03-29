@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import { QuickRunCommand } from './types';
-
+import { escapeHtml } from './utils';
+import { QuickRunCommand, QuickRunGroup } from './types';
+import { GroupItem } from './GroupItem';
 export class CommandPanel {
   private static currentPanel: CommandPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
@@ -9,18 +10,22 @@ export class CommandPanel {
   static open(
     context: vscode.ExtensionContext,
     existing: QuickRunCommand | undefined,
+    groups: QuickRunGroup[],
+    groupItem: GroupItem | undefined,
     onSubmit: (data: QuickRunCommand) => void,
   ): void {
     if (CommandPanel.currentPanel) {
       CommandPanel.currentPanel.panel.reveal();
       return;
     }
-    CommandPanel.currentPanel = new CommandPanel(context, existing, onSubmit);
+    CommandPanel.currentPanel = new CommandPanel(context, existing, groups, groupItem, onSubmit);
   }
 
   private constructor(
     context: vscode.ExtensionContext,
     existing: QuickRunCommand | undefined,
+    groups: QuickRunGroup[],
+    groupItem: GroupItem | undefined,
     onSubmit: (data: QuickRunCommand) => void,
   ) {
     this.panel = vscode.window.createWebviewPanel(
@@ -30,7 +35,7 @@ export class CommandPanel {
       { enableScripts: true },
     );
 
-    this.panel.webview.html = this.getHtml(existing);
+    this.panel.webview.html = this.getHtml(groups, groupItem, existing);
 
     // Handle messages from the webview
     this.panel.webview.onDidReceiveMessage(
@@ -39,7 +44,12 @@ export class CommandPanel {
           case 'submit':
             // Always preserve the id when editing, only leave undefined for new commands
             const id = existing ? existing.id : undefined;
-            onSubmit({ id: id ?? '', label: message.label, customCommand: message.cmd });
+            onSubmit({
+              id: id ?? '',
+              label: message.label,
+              customCommand: message.cmd,
+              groupId: message?.groupId || undefined,
+            });
             this.panel.dispose();
             break;
           case 'cancel':
@@ -61,7 +71,34 @@ export class CommandPanel {
     this.disposables = [];
   }
 
-  private getHtml(existing?: QuickRunCommand): string {
+  private getGroupsHtml(
+    groups: QuickRunGroup[],
+    groupItem?: GroupItem,
+    existing?: QuickRunCommand,
+  ): string {
+    const preselectedGroupId = groupItem?.data.id || existing?.groupId;
+    const groupOptions = groups
+      .map(
+        (group) => `
+      <option value="${group.id}" ${preselectedGroupId === group.id ? 'selected' : ''}>
+        ${escapeHtml(group.label)}
+      </option>
+    `,
+      )
+      .join('');
+    return groupOptions;
+  }
+
+  private getHtml(
+    groups: QuickRunGroup[],
+    groupItem?: GroupItem,
+    existing?: QuickRunCommand,
+  ): string {
+    const groupOptions = this.getGroupsHtml(groups, groupItem, existing);
+
+    const escapedLabel = existing ? escapeHtml(existing.label) : '';
+    const escapedCommand = existing ? escapeHtml(existing.customCommand) : '';
+
     return /* html */ `
       <!DOCTYPE html>
       <html lang="en">
@@ -101,6 +138,26 @@ export class CommandPanel {
           input.error {
             border-color: var(--vscode-inputValidation-errorBorder);
           }
+          select {
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border, transparent);
+            padding: 6px 8px;
+            font-size: 13px;
+            border-radius: 2px;
+            outline: none;
+            width: 100%;
+            cursor: pointer;
+            appearance: none;   /* ← removes OS default styling */
+           }
+
+           select:focus {
+            border-color: var(--vscode-focusBorder);
+           }
+           option {
+            background: var(--vscode-dropdown-background);
+            color: var(--vscode-dropdown-foreground);
+           }
           .error-msg {
             font-size: 11px;
             color: var(--vscode-inputValidation-errorForeground);
@@ -140,13 +197,20 @@ export class CommandPanel {
       <body>
         <div class="field">
           <label for="label">Label</label>
-          <input id="label" type="text" placeholder="e.g. Run server" value="${existing ? existing.label : ''}" autofocus/>
+          <input id="label" type="text" placeholder="e.g. Run server" value="${escapedLabel}" autofocus/>
           <span class="error-msg" id="label-error">Label is required</span>
         </div>
         <div class="field">
           <label for="cmd">Command</label>
-          <input id="cmd" type="text" placeholder="e.g. python manage.py runserver" value="${existing ? existing.customCommand : ''}"/>
+          <input id="cmd" type="text" placeholder="e.g. python manage.py runserver" value="${escapedCommand}"/>
           <span class="error-msg" id="cmd-error">Command is required</span>
+        </div>
+        <div class="field">
+          <label for="group">Group <span style="opacity:0.5">(optional)</span></label>
+          <select id="group">
+            <option value="">No group</option>
+            ${groupOptions}
+          </select>
         </div>
         <div class="actions">
           <button class="btn-primary" onclick="submit()">
@@ -162,6 +226,9 @@ export class CommandPanel {
             let valid = true;
             const label = document.getElementById('label');
             const cmd = document.getElementById('cmd');
+            const group = document.getElementById('group');
+            console.log("🚀 ~ CommandPanel ~ getHtml ~ group:", group.value)
+
             const labelError = document.getElementById('label-error');
             const cmdError = document.getElementById('cmd-error');
 
@@ -192,6 +259,7 @@ export class CommandPanel {
               type: 'submit',
               label: document.getElementById('label').value.trim(),
               cmd: document.getElementById('cmd').value.trim(),
+              groupId: document.getElementById('group').value || undefined,
             });
           }
 
