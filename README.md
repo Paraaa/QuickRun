@@ -1,71 +1,95 @@
-# QuickRun README
+# QuickRun
 
-This is the README for your extension "QuickRun". After writing up a brief description, we recommend including the following sections.
+Save and run any terminal command from the VS Code sidebar. No more retyping long commands! Organise them into groups, pick an icon, and run with one click.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Run commands in one click** from the sidebar panel
+- **Organise with groups**: fold related commands together
+- **Project scope**: save commands to `.vscode/quickrun.json` and commit them with your repo so the whole team shares them
+- **Global scope**: save commands to VS Code settings so they follow you across every workspace
+- **Icon picker**: choose from 60+ VS Code codicons per command or group
 
-For example if there is an image subfolder under your extension project workspace:
+## Use cases
 
-\!\[feature X\]\(images/feature-x.png\)
+**Web / full-stack project** - save `npm run dev`, `npm run build`, and `npm test` as a project group, commit `.vscode/quickrun.json`, and every teammate gets the same commands on clone.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+**Django / Python** - keep `python manage.py runserver`, `makemigrations`, `migrate`, and `createsuperuser` in a project group so you never mistype them again.
 
-## Requirements
+**Docker** - store `docker compose up -d`, `docker compose down`, and `docker ps` as global commands so they are available in every workspace.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+**Monorepo** - create a group per package (`frontend`, `backend`, `shared`) with the relevant build and test commands for each.
+
+**DevOps / scripts** - save long one-liners (`kubectl get pods -n production`, `ssh deploy@myserver`) globally so they are always one click away.
+
+## Getting started
+
+1. Click the **QuickRun icon** in the Activity Bar
+2. Click **+** (Add Command) in the panel toolbar
+3. Fill in a label, the command to run, optionally pick an icon and group, choose a scope (Project or Global), then click **Add Command**
+4. Click the **play** button next to any command to run it in the terminal
+
+## Commands
+
+| Action | How |
+|---|---|
+| Add command | Toolbar `+` button or right-click a group → Add Command |
+| Edit command | Right-click a command → Edit |
+| Delete command | Right-click a command → Delete |
+| Add group | Toolbar `Add Group` button -a scope picker appears first |
+| Delete group | Right-click a group → Delete Group |
+| Refresh panel | Toolbar `Refresh` button |
+
+## Scopes
+
+| Scope | Stored in | Use for |
+|---|---|---|
+| **Project** | `.vscode/quickrun.json` | Commands specific to this repo -commit the file so teammates get them too |
+| **Global** | VS Code `settings.json` | Commands you want available everywhere (e.g. `git status`, `docker ps`) |
+
+The panel shows a `project` or `global` badge next to each item so you always know where it lives.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+`quickrun.global`: stores global commands and groups in VS Code settings. Managed automatically by the extension. You can also edit it directly:
 
-For example:
+```json
+"quickrun.global": {
+  "commands": [
+    {
+      "id": "...",
+      "label": "Docker PS",
+      "customCommand": "docker ps",
+      "icon": "server"
+    }
+  ],
+  "groups": []
+}
+```
 
-This extension contributes the following settings:
+## Project config file
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+`.vscode/quickrun.json` is created automatically when you save your first project-scoped command. Example:
 
-## Known Issues
+```json
+{
+  "commands": [
+    {
+      "id": "a1b2c3d4-...",
+      "label": "Run server",
+      "customCommand": "python manage.py runserver",
+      "icon": "play",
+      "groupId": "django-group-id"
+    }
+  ],
+  "groups": [
+    {
+      "id": "django-group-id",
+      "label": "Django",
+      "icon": "server"
+    }
+  ]
+}
+```
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+Commit this file to share commands with your team.
