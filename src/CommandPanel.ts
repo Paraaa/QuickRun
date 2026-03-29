@@ -41,7 +41,9 @@ export class CommandPanel {
       vscode.ViewColumn.One,
       {
         enableScripts: true,
-        localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'node_modules')],
+        localResourceRoots: [
+          vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'codicons', 'dist'),
+        ],
       },
     );
 
@@ -149,11 +151,11 @@ export class CommandPanel {
       <html lang="en">
       <head>
         <meta charset="UTF-8"/>
-        <meta http-equiv="Content-Security-Policy"
+       <meta http-equiv="Content-Security-Policy"
         content="default-src 'none';
-                 font-src ${webview.cspSource};
-                 style-src ${webview.cspSource} 'unsafe-inline';
-                 script-src 'unsafe-inline';">
+                font-src ${webview.cspSource};
+                style-src ${webview.cspSource} 'unsafe-inline';
+                script-src 'unsafe-inline';">
         <link href="${codiconsUri}" rel="stylesheet"/>
         <style>
           body {
