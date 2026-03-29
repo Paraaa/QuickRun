@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.0.3] - 2026-03-29
+### Fix
+ - Icons should not load properly in the command panel
 
 ## [0.0.1] - 2026-03-29
 ### Added
