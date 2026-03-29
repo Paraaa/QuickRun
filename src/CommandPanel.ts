@@ -37,7 +37,9 @@ export class CommandPanel {
       (message) => {
         switch (message.type) {
           case 'submit':
-            onSubmit({ label: message.label, customCommand: message.cmd });
+            // Always preserve the id when editing, only leave undefined for new commands
+            const id = existing ? existing.id : undefined;
+            onSubmit({ id: id ?? '', label: message.label, customCommand: message.cmd });
             this.panel.dispose();
             break;
           case 'cancel':

@@ -1,17 +1,32 @@
 import * as vscode from 'vscode';
-import { CommandItem, CommandsProvider } from './CommandsProvider';
+import { CommandsProvider } from './CommandsProvider';
+import { CommandItem } from './CommandItem';
 import { CommandPanel } from './CommandPanel';
+import { CommandStore } from './CommandStore';
 import { QuickRunCommand } from './types';
 
 export function activate(context: vscode.ExtensionContext) {
-  const commandsProvider = new CommandsProvider();
+  const commandStore = new CommandStore();
+
+  // TODO:: Hardcoded for now — replace with config loading later and move to constructor of CommandStore
+  commandStore.add({
+    label: 'Run server',
+    customCommand: 'python manage.py runserver',
+  });
+
+  commandStore.add({
+    label: 'Migrate',
+    customCommand: 'python manage.py migrate',
+  });
+
+  const commandsProvider = new CommandsProvider(commandStore);
 
   vscode.window.registerTreeDataProvider('quickrunPanel', commandsProvider);
 
   const commands: Record<string, (...args: any[]) => void> = {
     'quickrun.addCommand': () => {
       CommandPanel.open(context, undefined, (data: QuickRunCommand) => {
-        commandsProvider.addCommand(data);
+        commandStore.add(data);
       });
     },
     'quickrun.refreshCommands': () => commandsProvider.refresh(),
@@ -20,10 +35,9 @@ export function activate(context: vscode.ExtensionContext) {
     'quickrun.executeCommand': (commandItem: CommandItem) => commandItem.execute(),
     'quickrun.editCommand': (commandItem: CommandItem) =>
       CommandPanel.open(context, commandItem.data, (data: QuickRunCommand) => {
-        commandsProvider.editCommand(commandItem, data);
+        commandStore.edit(commandItem.data.id, data);
       }),
-    'quickrun.deleteCommand': (commandItem: CommandItem) =>
-      commandsProvider.deleteCommand(commandItem),
+    'quickrun.deleteCommand': (commandItem: CommandItem) => commandStore.delete(commandItem.data),
   };
 
   const disposables = Object.entries(commands).map(([command, callback]) =>
