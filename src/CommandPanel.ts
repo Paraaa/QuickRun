@@ -1,28 +1,36 @@
 import * as vscode from 'vscode';
 import { QuickRunCommand } from './types';
 
-export class AddCommandPanel {
-  private static currentPanel: AddCommandPanel | undefined;
+export class CommandPanel {
+  private static currentPanel: CommandPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
 
-  static open(context: vscode.ExtensionContext, onSubmit: (data: QuickRunCommand) => void): void {
-    if (AddCommandPanel.currentPanel) {
-      AddCommandPanel.currentPanel.panel.reveal();
+  static open(
+    context: vscode.ExtensionContext,
+    existing: QuickRunCommand | undefined,
+    onSubmit: (data: QuickRunCommand) => void,
+  ): void {
+    if (CommandPanel.currentPanel) {
+      CommandPanel.currentPanel.panel.reveal();
       return;
     }
-    AddCommandPanel.currentPanel = new AddCommandPanel(context, onSubmit);
+    CommandPanel.currentPanel = new CommandPanel(context, existing, onSubmit);
   }
 
-  private constructor(context: vscode.ExtensionContext, onSubmit: (data: QuickRunCommand) => void) {
+  private constructor(
+    context: vscode.ExtensionContext,
+    existing: QuickRunCommand | undefined,
+    onSubmit: (data: QuickRunCommand) => void,
+  ) {
     this.panel = vscode.window.createWebviewPanel(
       'quickrunAddCommand',
-      'Add Command',
+      existing ? 'Edit Command' : 'Add Command',
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
 
-    this.panel.webview.html = this.getHtml();
+    this.panel.webview.html = this.getHtml(existing);
 
     // Handle messages from the webview
     this.panel.webview.onDidReceiveMessage(
@@ -45,13 +53,13 @@ export class AddCommandPanel {
   }
 
   private dispose(): void {
-    AddCommandPanel.currentPanel = undefined;
+    CommandPanel.currentPanel = undefined;
     this.panel.dispose();
     this.disposables.forEach((d) => d.dispose());
     this.disposables = [];
   }
 
-  private getHtml(): string {
+  private getHtml(existing?: QuickRunCommand): string {
     return /* html */ `
       <!DOCTYPE html>
       <html lang="en">
@@ -130,16 +138,18 @@ export class AddCommandPanel {
       <body>
         <div class="field">
           <label for="label">Label</label>
-          <input id="label" type="text" placeholder="e.g. Run server" autofocus/>
+          <input id="label" type="text" placeholder="e.g. Run server" value="${existing ? existing.label : ''}" autofocus/>
           <span class="error-msg" id="label-error">Label is required</span>
         </div>
         <div class="field">
           <label for="cmd">Command</label>
-          <input id="cmd" type="text" placeholder="e.g. python manage.py runserver"/>
+          <input id="cmd" type="text" placeholder="e.g. python manage.py runserver" value="${existing ? existing.customCommand : ''}"/>
           <span class="error-msg" id="cmd-error">Command is required</span>
         </div>
         <div class="actions">
-          <button class="btn-primary" onclick="submit()">Add Command</button>
+          <button class="btn-primary" onclick="submit()">
+                ${existing ? 'Save Changes' : 'Add Command'}
+          </button>
           <button class="btn-secondary" onclick="cancel()">Cancel</button>
         </div>
 

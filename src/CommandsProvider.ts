@@ -15,10 +15,6 @@ export class CommandItem extends vscode.TreeItem {
       vscode.window.showWarningMessage(`No command defined for "${this.data.label}"`);
     }
   }
-
-  edit(): void {
-    vscode.window.showInformationMessage(`Edit "${this.data.label}" — coming soon!`);
-  }
 }
 
 export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
@@ -45,6 +41,12 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem> {
 
   addCommand(data: QuickRunCommand): void {
     this.items.push(new CommandItem(data));
+    this.refresh();
+  }
+
+  editCommand(commandItem: CommandItem, newData: QuickRunCommand): void {
+    commandItem.data.label = newData.label;
+    commandItem.data.customCommand = newData.customCommand;
     this.refresh();
   }
 
