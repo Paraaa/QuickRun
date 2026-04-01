@@ -2,10 +2,10 @@
   "name": "quickrun",
   "displayName": "QuickRun",
   "description": "Quickly create, save and execute any command",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "publisher": "andrejschwanke",
   "license": "MIT",
-  "icon": "assets/icon.png",
+  "icon": "assets/QuickRun_transparent.png",
   "homepage": "https://github.com/Paraaa/QuickRun#readme",
   "repository": {
     "type": "git",
