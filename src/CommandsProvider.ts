@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { CommandStore } from './CommandStore';
-import { CommandItem } from './CommandItem';
+import { CommandItem, onDidChangeTerminalState } from './CommandItem';
 import { GroupItem } from './GroupItem';
 
 export class CommandsProvider implements vscode.TreeDataProvider<CommandItem | GroupItem> {
@@ -9,6 +9,7 @@ export class CommandsProvider implements vscode.TreeDataProvider<CommandItem | G
 
   constructor(private readonly commandStore: CommandStore) {
     commandStore.onDidChange(() => this.refresh());
+    onDidChangeTerminalState(() => this.refresh());
   }
 
   getTreeItem(element: CommandItem | GroupItem): vscode.TreeItem {

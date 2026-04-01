@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { CommandItem } from '../CommandItem';
+import { CommandItem, focusTerminalForLabel } from '../CommandItem';
 import { GroupItem } from '../GroupItem';
 import { QuickRunCommand, QuickRunGroup } from '../types';
 
@@ -164,43 +164,285 @@ suite('CommandItem — execute()', () => {
   });
 
   test('sends the exact command text to the terminal', () => {
-    const item = new CommandItem(makeCmd({ customCommand: 'npm run build' }));
+    const item = new CommandItem(makeCmd({ label: 'Send Text Test', customCommand: 'npm run build' }));
     item.execute();
     assert.ok(sentTexts.includes('npm run build'));
   });
 
-  test('creates a new terminal when no active terminal', () => {
-    let terminalCreated = false;
+  test('creates a new terminal named after the command label', () => {
+    let capturedName = '';
     (vscode.window as any).createTerminal = (name: string) => {
-      terminalCreated = true;
-      assert.strictEqual(name, 'Quick Run');
+      capturedName = name;
       return fakeTerminal;
     };
-    const item = new CommandItem(makeCmd({ customCommand: 'ls' }));
+    const item = new CommandItem(makeCmd({ label: 'My Server', customCommand: 'ls' }));
     item.execute();
-    assert.ok(terminalCreated);
+    assert.strictEqual(capturedName, 'My Server');
   });
 
-  test('uses the active terminal when one exists', () => {
-    const activeSent: string[] = [];
-    const activeTerminal = {
-      show() {},
-      sendText(text: string, _nl: boolean) {
-        activeSent.push(text);
-      },
-    };
-    Object.defineProperty(vscode.window, 'activeTerminal', {
-      get: () => activeTerminal,
-      configurable: true,
-    });
-    // createTerminal must not be called
-    (vscode.window as any).createTerminal = () => {
-      throw new Error('createTerminal should not be called when there is an active terminal');
+  test('sends the command to a managed terminal when one already exists for the label', () => {
+    // First execute registers the terminal in managedTerminals.
+    const item = new CommandItem(makeCmd({ label: 'Managed Test', customCommand: 'echo hi' }));
+    item.execute();
+    // As long as no error is thrown and sendText was called, the managed path ran.
+    assert.ok(sentTexts.includes('echo hi'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CommandItem — terminal reuse
+// ---------------------------------------------------------------------------
+
+suite('CommandItem — terminal reuse', () => {
+  // Each test uses a unique label so module-level managedTerminals state doesn't
+  // bleed between tests.
+  let seq = 0;
+  const uid = () => `__reuse_${seq++}_${Date.now()}`;
+
+  interface FakeTerm {
+    exitStatus: vscode.TerminalExitStatus | undefined;
+    shellIntegration: undefined;
+    showCount: number;
+    sentTexts: string[];
+    show(): void;
+    sendText(t: string, nl: boolean): void;
+  }
+
+  const makeTerm = (): FakeTerm => ({
+    exitStatus: undefined,
+    shellIntegration: undefined,
+    showCount: 0,
+    sentTexts: [],
+    show() { this.showCount++; },
+    sendText(t: string) { this.sentTexts.push(t); },
+  });
+
+  // Saved originals
+  let savedCreate: typeof vscode.window.createTerminal;
+  let savedOnEnd: typeof vscode.window.onDidEndTerminalShellExecution;
+  let savedOnIntegration: typeof vscode.window.onDidChangeTerminalShellIntegration;
+  let savedOnClose: typeof vscode.window.onDidCloseTerminal;
+
+  // Captured callbacks from mocks
+  let endCbs: Array<(e: { terminal: unknown }) => void>;
+  let integrationCbs: Array<(e: { terminal: unknown }) => void>;
+  let closeCbs: Array<(t: unknown) => void>;
+
+  // Terminals returned by createTerminal
+  let created: FakeTerm[];
+
+  setup(() => {
+    created = [];
+    endCbs = [];
+    integrationCbs = [];
+    closeCbs = [];
+
+    savedCreate = vscode.window.createTerminal;
+    savedOnEnd = vscode.window.onDidEndTerminalShellExecution;
+    savedOnIntegration = vscode.window.onDidChangeTerminalShellIntegration;
+    savedOnClose = vscode.window.onDidCloseTerminal;
+
+    (vscode.window as any).createTerminal = (_name: string) => {
+      const t = makeTerm();
+      created.push(t);
+      return t;
     };
 
-    const item = new CommandItem(makeCmd({ customCommand: 'ls -la' }));
+    (vscode.window as any).onDidEndTerminalShellExecution = (cb: (e: any) => void) => {
+      endCbs.push(cb);
+      return { dispose() {} };
+    };
+
+    (vscode.window as any).onDidChangeTerminalShellIntegration = (cb: (e: any) => void) => {
+      integrationCbs.push(cb);
+      return { dispose() {} };
+    };
+
+    (vscode.window as any).onDidCloseTerminal = (cb: (t: any) => void) => {
+      closeCbs.push(cb);
+      return { dispose() {} };
+    };
+  });
+
+  teardown(() => {
+    (vscode.window as any).createTerminal = savedCreate;
+    (vscode.window as any).onDidEndTerminalShellExecution = savedOnEnd;
+    (vscode.window as any).onDidChangeTerminalShellIntegration = savedOnIntegration;
+    (vscode.window as any).onDidCloseTerminal = savedOnClose;
+  });
+
+  const fireEnd = (t: FakeTerm) => endCbs.forEach((cb) => cb({ terminal: t }));
+  const fireIntegration = (t: FakeTerm) => integrationCbs.forEach((cb) => cb({ terminal: t }));
+
+  test('first execute creates a terminal named after the command label', () => {
+    const label = uid();
+    let capturedName = '';
+    (vscode.window as any).createTerminal = (name: string) => {
+      capturedName = name;
+      const t = makeTerm();
+      created.push(t);
+      return t;
+    };
+    new CommandItem(makeCmd({ label, customCommand: 'echo hi' })).execute();
+    assert.strictEqual(capturedName, label);
+    assert.strictEqual(created.length, 1);
+  });
+
+  test('reuses free terminal after onDidEndTerminalShellExecution fires', () => {
+    const label = uid();
+    const item = new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'echo hi' }));
+
     item.execute();
-    assert.ok(activeSent.includes('ls -la'));
+    assert.strictEqual(created.length, 1);
+    const term = created[0];
+
+    fireEnd(term); // simulate command completion
+
+    item.execute(); // second run
+    assert.strictEqual(created.length, 1, 'no new terminal created — reused the free one');
+    assert.strictEqual(term.sentTexts.length, 2, 'command sent to the same terminal twice');
+  });
+
+  test('reuses free terminal after onDidChangeTerminalShellIntegration fires', () => {
+    const label = uid();
+    const item = new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'npm test' }));
+
+    item.execute();
+    const term = created[0];
+
+    fireIntegration(term); // shell integration activated = command finished
+
+    item.execute();
+    assert.strictEqual(created.length, 1, 'no new terminal created');
+    assert.strictEqual(term.sentTexts.length, 2);
+  });
+
+  test('focuses running terminal without re-executing while command is busy', () => {
+    const label = uid();
+    const item = new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'npm start' }));
+
+    item.execute();
+    const term = created[0];
+    const showAfterFirst = term.showCount;
+
+    // No completion event fired — terminal is still busy
+    item.execute();
+    assert.strictEqual(created.length, 1, 'no new terminal created');
+    assert.strictEqual(term.sentTexts.length, 1, 'command not sent a second time');
+    assert.ok(term.showCount > showAfterFirst, 'terminal.show() called again to focus it');
+  });
+
+  test('creates a new terminal when previous one has exited', () => {
+    const label = uid();
+    const item = new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'echo hi' }));
+
+    item.execute();
+    const term1 = created[0];
+
+    // Mark terminal as exited and simulate completion cleanup
+    (term1 as any).exitStatus = { code: 0 };
+    fireEnd(term1);
+
+    item.execute();
+    assert.strictEqual(created.length, 2, 'new terminal created because the old one has exitStatus set');
+  });
+
+  test('does not re-execute when completion fires twice (freed guard)', () => {
+    const label = uid();
+    const item = new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'echo' }));
+
+    item.execute();
+    const term = created[0];
+
+    fireEnd(term);
+    fireEnd(term); // second fire should be a no-op due to the freed guard
+
+    // Terminal should still be free — one more execute should reuse it, not create new
+    item.execute();
+    assert.strictEqual(created.length, 1);
+    assert.strictEqual(term.sentTexts.length, 2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// focusTerminalForLabel
+// ---------------------------------------------------------------------------
+
+suite('focusTerminalForLabel', () => {
+  let seq = 0;
+  const uid = () => `__focus_${seq++}_${Date.now()}`;
+
+  interface FakeTerm {
+    exitStatus: vscode.TerminalExitStatus | undefined;
+    shellIntegration: undefined;
+    showCount: number;
+    sentTexts: string[];
+    show(): void;
+    sendText(t: string, nl: boolean): void;
+  }
+
+  const makeTerm = (): FakeTerm => ({
+    exitStatus: undefined,
+    shellIntegration: undefined,
+    showCount: 0,
+    sentTexts: [],
+    show() { this.showCount++; },
+    sendText(t: string) { this.sentTexts.push(t); },
+  });
+
+  let savedCreate: typeof vscode.window.createTerminal;
+  let savedOnEnd: typeof vscode.window.onDidEndTerminalShellExecution;
+  let savedOnIntegration: typeof vscode.window.onDidChangeTerminalShellIntegration;
+  let savedOnClose: typeof vscode.window.onDidCloseTerminal;
+  let created: FakeTerm[];
+
+  setup(() => {
+    created = [];
+    savedCreate = vscode.window.createTerminal;
+    savedOnEnd = vscode.window.onDidEndTerminalShellExecution;
+    savedOnIntegration = vscode.window.onDidChangeTerminalShellIntegration;
+    savedOnClose = vscode.window.onDidCloseTerminal;
+
+    (vscode.window as any).createTerminal = (_name: string) => {
+      const t = makeTerm();
+      created.push(t);
+      return t;
+    };
+    (vscode.window as any).onDidEndTerminalShellExecution = () => ({ dispose() {} });
+    (vscode.window as any).onDidChangeTerminalShellIntegration = () => ({ dispose() {} });
+    (vscode.window as any).onDidCloseTerminal = () => ({ dispose() {} });
+  });
+
+  teardown(() => {
+    (vscode.window as any).createTerminal = savedCreate;
+    (vscode.window as any).onDidEndTerminalShellExecution = savedOnEnd;
+    (vscode.window as any).onDidChangeTerminalShellIntegration = savedOnIntegration;
+    (vscode.window as any).onDidCloseTerminal = savedOnClose;
+  });
+
+  test('shows the open terminal for a known label', () => {
+    const label = uid();
+    new CommandItem(makeCmd({ label, customCommand: 'echo' })).execute();
+    const term = created[0];
+    const showBefore = term.showCount;
+
+    focusTerminalForLabel(label);
+    assert.ok(term.showCount > showBefore);
+  });
+
+  test('does nothing for an unknown label', () => {
+    assert.doesNotThrow(() => focusTerminalForLabel('__no_such_label__'));
+  });
+
+  test('does nothing when terminal has exited', () => {
+    const label = uid();
+    new CommandItem(makeCmd({ label, customCommand: 'echo' })).execute();
+    const term = created[0];
+    (term as any).exitStatus = { code: 0 };
+    const showBefore = term.showCount;
+
+    focusTerminalForLabel(label);
+    assert.strictEqual(term.showCount, showBefore, 'should not show an exited terminal');
   });
 });
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { CommandsProvider } from './CommandsProvider';
-import { CommandItem } from './CommandItem';
+import { CommandItem, focusTerminalForLabel } from './CommandItem';
 import { CommandPanel } from './CommandPanel';
 import { CommandStore } from './CommandStore';
 import { ConfigLoader } from './ConfigLoader';
@@ -17,7 +17,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const commandsProvider = new CommandsProvider(commandStore);
   vscode.window.registerTreeDataProvider('quickrunPanel', commandsProvider);
-
   const commands: Record<string, (...args: any[]) => void | Promise<void>> = {
     'quickrun.addCommand': (groupItem?: GroupItem) => {
       CommandPanel.open(
@@ -70,6 +69,9 @@ export async function activate(context: vscode.ExtensionContext) {
       ),
 
     'quickrun.deleteCommand': (commandItem: CommandItem) => commandStore.delete(commandItem.data),
+
+    'quickrun.focusTerminal': (commandItem: CommandItem) =>
+      focusTerminalForLabel(commandItem.data.label),
   };
 
   const disposables = Object.entries(commands).map(([command, callback]) =>

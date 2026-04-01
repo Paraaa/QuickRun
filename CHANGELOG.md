@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.7] - 2026-04-01
+### Added
+- Clicking a command in the sidebar now focuses its terminal if one is already open
+- Running commands are highlighted with a green icon indicator
+
+### Fixed
+- Terminal reuse: free terminals are now correctly reused instead of spawning a new one on each run
+- Interactive programs (e.g. `htop`) no longer leave the icon permanently green after exiting
+
 ## [0.0.6] - 2026-04-01
  - Update the README and activity bar icon
 

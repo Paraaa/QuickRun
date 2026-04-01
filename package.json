@@ -1,11 +1,11 @@
 {
   "name": "quickrun",
   "displayName": "QuickRun",
-  "description": "Quickly create, save and execute any command",
+  "description": "Save and run any terminal command from the VS Code sidebar in one click.",
   "version": "0.0.6",
   "publisher": "andrejschwanke",
   "license": "MIT",
-  "icon": "assets/QuickRun_transparent.png",
+  "icon": "assets/QuickRun_no_text_transparent.png",
   "homepage": "https://github.com/Paraaa/QuickRun#readme",
   "repository": {
     "type": "git",
@@ -55,6 +55,10 @@
         "command": "quickrun.deleteCommand",
         "title": "Delete Command",
         "icon": "$(trash)"
+      },
+      {
+        "command": "quickrun.focusTerminal",
+        "title": "Focus Terminal"
       },
       {
         "command": "quickrun.deleteGroup",

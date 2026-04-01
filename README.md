@@ -16,8 +16,8 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 
 <br />
 
-<!-- Replace with your actual .gif -->
-![QuickRun in action](images/screenshot-overview.png)
+<!-- TODO: Add image or Gif Replace with your actual .gif
+![QuickRun in action](images/screenshot-overview.png) -->
 
 </div>
 
