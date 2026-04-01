@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.0.5] - 2026-04-01
+ - Update the README and activity bar icon
+
 ## [0.0.4] - 2026-03-29
 ### Fix
  - Icons should now load properly in the command panel
