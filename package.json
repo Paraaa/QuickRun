@@ -72,7 +72,7 @@
         {
           "id": "quickrunPanel",
           "title": "Quick Run",
-          "icon": "assets/icon.svg"
+          "icon": "assets/logo_dark_transparent.png"
         }
       ]
     },
@@ -81,7 +81,7 @@
         {
           "id": "quickrunPanel",
           "name": "Quick Run",
-          "icon": "assets/icon.svg"
+          "icon": "assets/logo_dark_transparent.png"
         }
       ]
     },
