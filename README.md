@@ -21,7 +21,6 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 
 </div>
 
----
 
 ## ✨ Features
 
@@ -35,7 +34,6 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 | 🌐 **Global scope** | Save commands to VS Code settings so they follow you across every workspace |
 | 🎨 **Icon picker** | Choose from 60+ VS Code codicons per command or group |
 
----
 
 ## 🚀 Getting Started
 
@@ -44,7 +42,6 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 3. Fill in a label, the command to run, optionally pick an icon and group, choose a scope (**Project** or **Global**), then click **Add Command**
 4. Click the **▶ play** button next to any command to run it in the terminal
 
----
 
 ## 💡 Use Cases
 
@@ -83,7 +80,6 @@ Save long one-liners (`kubectl get pods -n production`, `ssh deploy@myserver`) g
 
 </details>
 
----
 
 ## 🔭 Scopes
 
@@ -94,7 +90,6 @@ The panel shows a **`project`** or **`global`** badge next to each item so you a
 | **Project** | `.vscode/quickrun.json` | Commands specific to this repo — commit the file so teammates get them too |
 | **Global** | VS Code `settings.json` | Commands you want available everywhere (e.g. `git status`, `docker ps`) |
 
----
 
 ## ⚙️ Configuration
 
@@ -179,8 +174,6 @@ Created automatically when you save your first project-scoped command. Commit th
   ]
 }
 ```
-
----
 
 ## 🤝 Contributing
 

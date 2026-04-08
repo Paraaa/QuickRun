@@ -2,7 +2,7 @@
   "name": "quickrun",
   "displayName": "QuickRun",
   "description": "Save and run any terminal command from the VS Code sidebar in one click.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "andrejschwanke",
   "license": "MIT",
   "icon": "assets/QuickRun_no_text_transparent.png",
