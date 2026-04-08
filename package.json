@@ -61,6 +61,11 @@
         "title": "Focus Terminal"
       },
       {
+        "command": "quickrun.stopCommand",
+        "title": "Stop Command",
+        "icon": "$(stop-circle)"
+      },
+      {
         "command": "quickrun.deleteGroup",
         "title": "Delete Group",
         "icon": "$(trash)"
@@ -114,13 +119,18 @@
           "group": "inline@1"
         },
         {
+          "command": "quickrun.stopCommand",
+          "when": "view == quickrunPanel && viewItem == commandItemRunning",
+          "group": "inline@1"
+        },
+        {
           "command": "quickrun.editCommand",
-          "when": "view == quickrunPanel && viewItem == commandItem",
+          "when": "view == quickrunPanel && viewItem =~ /commandItem/",
           "group": "inline@2"
         },
         {
           "command": "quickrun.deleteCommand",
-          "when": "view == quickrunPanel && viewItem == commandItem",
+          "when": "view == quickrunPanel && viewItem =~ /commandItem/",
           "group": "inline@3"
         },
         {

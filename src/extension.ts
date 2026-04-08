@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { CommandsProvider } from './CommandsProvider';
-import { CommandItem, focusTerminalForLabel } from './CommandItem';
+import { CommandItem, focusTerminalForLabel, stopCommandForLabel } from './CommandItem';
 import { CommandPanel } from './CommandPanel';
 import { CommandStore } from './CommandStore';
 import { ConfigLoader } from './ConfigLoader';
@@ -72,6 +72,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
     'quickrun.focusTerminal': (commandItem: CommandItem) =>
       focusTerminalForLabel(commandItem.data.label),
+
+    'quickrun.stopCommand': (commandItem: CommandItem) =>
+      stopCommandForLabel(commandItem.data.label),
   };
 
   const disposables = Object.entries(commands).map(([command, callback]) =>

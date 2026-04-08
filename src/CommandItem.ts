@@ -17,6 +17,14 @@ export function focusTerminalForLabel(label: string): void {
   }
 }
 
+export function stopCommandForLabel(label: string): void {
+  const list = managedTerminals.get(label) ?? [];
+  const busy = list.find((t) => t.exitStatus === undefined && busyTerminals.has(t));
+  if (busy) {
+    busy.dispose();
+  }
+}
+
 let trackingInitialized = false;
 function initTracking(): void {
   if (trackingInitialized) {
@@ -61,16 +69,13 @@ function markDone(terminal: vscode.Terminal, cmdId: string): void {
 export class CommandItem extends vscode.TreeItem {
   constructor(public readonly data: QuickRunCommand) {
     super(data.label, vscode.TreeItemCollapsibleState.None);
-    this.contextValue = 'commandItem';
+    const isRunning = data.id ? runningCommands.has(data.id) : false;
+    this.contextValue = isRunning ? 'commandItemRunning' : 'commandItem';
     this.id = data.id;
     this.tooltip = data.customCommand;
-    this.description = data.source === 'global' ? 'global' : 'project';
-
-    const isRunning = data.id ? runningCommands.has(data.id) : false;
-    this.iconPath = new vscode.ThemeIcon(
-      data.icon || 'play',
-      isRunning ? new vscode.ThemeColor('testing.iconPassed') : undefined,
-    );
+    this.iconPath = new vscode.ThemeIcon(isRunning ? 'loading~spin' : data.icon || 'play');
+    this.description = isRunning ? 'running' : data.source === 'global' ? 'global' : 'project';
+    // Single-click always focuses the terminal (if one exists). Execute via the play button.
     this.command = {
       command: 'quickrun.focusTerminal',
       title: 'Focus Terminal',
@@ -88,6 +93,7 @@ export class CommandItem extends vscode.TreeItem {
 
     const label = this.data.label;
     const commandId = this.data.id ?? '';
+    const terminalMode = this.data.terminalMode ?? 'reuse';
     const existing = managedTerminals.get(label) ?? [];
 
     // If already running, just focus that terminal.
@@ -99,10 +105,11 @@ export class CommandItem extends vscode.TreeItem {
       return;
     }
 
-    // Find a free managed terminal or create a new one.
-    const freeTerminal = existing.find(
-      (t) => t.exitStatus === undefined && !busyTerminals.has(t),
-    );
+    // Reuse a free terminal or always create a new one, depending on terminalMode.
+    const freeTerminal =
+      terminalMode === 'reuse'
+        ? existing.find((t) => t.exitStatus === undefined && !busyTerminals.has(t))
+        : undefined;
     const terminal = freeTerminal ?? vscode.window.createTerminal(label);
 
     if (!freeTerminal) {
@@ -133,23 +140,18 @@ export class CommandItem extends vscode.TreeItem {
       terminal.shellIntegration.executeCommand(this.data.customCommand);
     } else {
       terminal.sendText(this.data.customCommand, true);
-      // When shell integration first activates, the command has finished and the
-      // shell is at a prompt — treat that as completion.
-      subs.push(
-        vscode.window.onDidChangeTerminalShellIntegration((e) => {
-          if (e.terminal === terminal) markFree();
-        }),
-      );
+      // Without shell integration there is no reliable completion event.
+      // The command stays "running" until onDidEndTerminalShellExecution fires
+      // (if integration later activates) or the terminal closes.
     }
 
     subs.push(
       // Terminal-identity (not execution-identity) so interactive programs like
       // htop also clear the busy state when they exit.
       vscode.window.onDidEndTerminalShellExecution((e) => {
-        if (e.terminal === terminal) markFree();
-      }),
-      vscode.window.onDidCloseTerminal((t) => {
-        if (t === terminal) markFree();
+        if (e.terminal === terminal) {
+          markFree();
+        }
       }),
     );
   }

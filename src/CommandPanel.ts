@@ -60,6 +60,7 @@ export class CommandPanel {
               customCommand: message.customCommand,
               icon: message?.icon || 'play',
               groupId: message?.groupId || undefined,
+              terminalMode: message.terminalMode === 'new' ? 'new' : 'reuse',
               source: existing ? existing.source : (message.source ?? 'project'),
             });
             this.panel.dispose();
@@ -323,6 +324,13 @@ export class CommandPanel {
             ${groupOptions}
           </select>
         </div>
+        <div class="field">
+          <label for="terminalMode">Terminal</label>
+          <select id="terminalMode">
+            <option value="reuse" ${(existing?.terminalMode ?? 'reuse') === 'reuse' ? 'selected' : ''}>Reuse terminal (create once, reuse on re-run)</option>
+            <option value="new" ${existing?.terminalMode === 'new' ? 'selected' : ''}>New terminal on every run</option>
+          </select>
+        </div>
         ${scopeField}
         <div class="actions">
           <button class="btn-primary" onclick="submit()">
@@ -391,6 +399,7 @@ export class CommandPanel {
               customCommand: document.getElementById('cmd').value.trim(),
               icon: document.getElementById('icon').value,
               groupId: document.getElementById('group').value || undefined,
+              terminalMode: document.getElementById('terminalMode').value,
               source: scopeEl ? scopeEl.value : undefined,
             });
           }

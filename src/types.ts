@@ -6,6 +6,7 @@ export interface QuickRunCommand {
   customCommand: string;
   icon?: string;
   groupId?: string;
+  terminalMode?: 'reuse' | 'new';
   source: ConfigScope;
 }
 

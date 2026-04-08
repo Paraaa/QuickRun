@@ -1,13 +1,12 @@
 # Changelog
 
-## [0.0.7] - 2026-04-01
+## [0.0.7] - 2026-04-08
 ### Added
-- Clicking a command in the sidebar now focuses its terminal if one is already open
-- Running commands are highlighted with a green icon indicator
-
-### Fixed
-- Terminal reuse: free terminals are now correctly reused instead of spawning a new one on each run
-- Interactive programs (e.g. `htop`) no longer leave the icon permanently green after exiting
+- **Stop button**: a `$(stop-circle)` inline button appears next to any running command. Clicking it kills the terminal immediately.
+- **Per-command terminal mode**: each command now has a "Terminal" setting in the edit panel: `Reuse terminal` (create once, reuse on re-run) or `New terminal on every run`
+- **Animated spinner**: the command icon switches to a `$(loading~spin)` spinner while the command is running
+- **`running` description badge**: the `project`/`global` badge changes to `running` in the tree item while a command is active
+- Single-clicking a tree item focuses the existing terminal.
 
 ## [0.0.6] - 2026-04-01
  - Update the README and activity bar icon
