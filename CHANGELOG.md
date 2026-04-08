@@ -7,6 +7,8 @@
 - **Animated spinner**: the command icon switches to a `$(loading~spin)` spinner while the command is running
 - **`running` description badge**: the `project`/`global` badge changes to `running` in the tree item while a command is active
 - Single-clicking a tree item focuses the existing terminal.
+- **Redesigned command panel**: the Add/Edit panel now has a cleaner layout with named sections, a collapsible icon picker, pill toggles for Terminal Behaviour and Scope, and a contextual hint explaining each terminal mode option
+- **Command description**: commands can now have an optional description. Hovering over a command in the sidebar shows the description and the raw shell command in a tooltip
 
 ## [0.0.6] - 2026-04-01
  - Update the README and activity bar icon

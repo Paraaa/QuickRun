@@ -72,7 +72,14 @@ export class CommandItem extends vscode.TreeItem {
     const isRunning = data.id ? runningCommands.has(data.id) : false;
     this.contextValue = isRunning ? 'commandItemRunning' : 'commandItem';
     this.id = data.id;
-    this.tooltip = data.customCommand;
+    const tooltip = new vscode.MarkdownString();
+    if (data.notes) {
+      tooltip.appendText(data.notes);
+      tooltip.appendMarkdown(`\n\n---\n\`${data.customCommand}\``);
+    } else {
+      tooltip.appendMarkdown(`\`${data.customCommand}\``);
+    }
+    this.tooltip = tooltip;
     this.iconPath = new vscode.ThemeIcon(isRunning ? 'loading~spin' : data.icon || 'play');
     this.description = isRunning ? 'running' : data.source === 'global' ? 'global' : 'project';
     // Single-click always focuses the terminal (if one exists). Execute via the play button.

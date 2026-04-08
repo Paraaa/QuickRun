@@ -80,7 +80,7 @@
       "activitybar": [
         {
           "id": "quickrunPanel",
-          "title": "Quick Run",
+          "title": "QuickRun",
           "icon": "assets/logo_dark_transparent.png"
         }
       ]
@@ -89,7 +89,7 @@
       "quickrunPanel": [
         {
           "id": "quickrunPanel",
-          "name": "Quick Run",
+          "name": "QuickRun",
           "icon": "assets/logo_dark_transparent.png"
         }
       ]

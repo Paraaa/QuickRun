@@ -4,6 +4,7 @@ export interface QuickRunCommand {
   id?: string;
   label: string;
   customCommand: string;
+  notes?: string;
   icon?: string;
   groupId?: string;
   terminalMode?: 'reuse' | 'new';
