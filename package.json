@@ -223,7 +223,8 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "publish:ovsx": "ovsx publish -p $OVSX_TOKEN"
+    "publish:ovsx": "node scripts/publish.js ovsx",
+    "publish:vscode": "node scripts/publish.js vscode"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
