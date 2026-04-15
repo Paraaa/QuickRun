@@ -8,11 +8,12 @@
 No more retyping long commands. Organise them into groups, pick an icon, and run instantly.
 
 ---
-<!--
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/andrejschwanke.quickrun?label=VS%20Code%20Marketplace&color=E8524A&labelColor=1a2233)](https://marketplace.visualstudio.com/items?itemName=andrejschwanke.quickrun) -->
+<!-- [![Version](https://img.shields.io/github/v/release/Paraaa/QuickRun?label=version&color=E8524A&labelColor=1a2233)](https://github.com/Paraaa/QuickRun/releases/latest) -->
+<!-- ![Version](https://badgen.net/vs-marketplace/v/andrejschwanke.quickrun-vscode-extension)
+![Installs](https://badgen.net/vs-marketplace/i/andrejschwanke.quickrun-vscode-extension) -->
 [![Open VSX](https://img.shields.io/open-vsx/v/andrejschwanke/quickrun?label=Open%20VSX&color=E8524A&labelColor=1a2233)](https://open-vsx.org/extension/andrejschwanke/quickrun)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/andrejschwanke/quickrun?color=E8524A&labelColor=1a2233)](https://open-vsx.org/extension/andrejschwanke/quickrun)
 [![License: MIT](https://img.shields.io/badge/License-MIT-E8524A.svg?labelColor=1a2233)](LICENSE)
-<!-- [![Downloads](https://img.shields.io/visual-studio-marketplace/d/andrejschwanke.quickrun?color=E8524A&labelColor=1a2233)](https://marketplace.visualstudio.com/items?itemName=andrejschwanke.quickrun) -->
 
 <br />
 
@@ -20,6 +21,17 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 ![QuickRun in action](images/screenshot-overview.png) -->
 
 </div>
+
+
+## 📦 Installation
+
+**VS Code** — search for *QuickRun* in the Extensions panel, or install directly from the marketplace:
+
+[![Install from VS Code Marketplace](https://img.shields.io/badge/Install-VS%20Code%20Marketplace-E8524A?style=for-the-badge&logo=visualstudiocode&logoColor=white&labelColor=1a2233)](https://marketplace.visualstudio.com/items?itemName=andrejschwanke.quickrun-vscode-extension)
+
+**VSCodium / Open VSX** — search for *QuickRun* in the Extensions panel, or install from Open VSX:
+
+[![Install from Open VSX](https://img.shields.io/badge/Install-Open%20VSX-E8524A?style=for-the-badge&logo=eclipseide&logoColor=white&labelColor=1a2233)](https://open-vsx.org/extension/andrejschwanke/quickrun)
 
 
 ## ✨ Features
