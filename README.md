@@ -17,8 +17,10 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 
 <br />
 
-<!-- TODO: Add image or Gif Replace with your actual .gif
-![QuickRun in action](images/screenshot-overview.png) -->
+
+*Stop retyping the same commands. Save them once, run them in one click.*
+
+![QuickRun in action](assets/example.gif)
 
 </div>
 
