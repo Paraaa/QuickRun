@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.0.8] - 2026-04-15
+- Update readme containing a section on known issue
+
 ## [0.0.7] - 2026-04-08
 ### Added
 - **Stop button**: a `$(stop-circle)` inline button appears next to any running command. Clicking it kills the terminal immediately.

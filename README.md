@@ -175,6 +175,17 @@ Created automatically when you save your first project-scoped command. Commit th
 }
 ```
 
+## ⚠️ Known Issues
+
+### Terminal Multiplexers (tmux, screen, zellij)
+
+If your shell automatically starts a terminal multiplexer like **tmux**, **screen**, or **zellij** on startup, VS Code inherits that environment when it launches. This can interfere with VS Code's shell integration, which QuickRun relies on to execute commands and detect when they finish. You may experience:
+
+- Commands appearing not to run when clicking the play button
+- Commands showing a permanent "running" indicator even after they have completed
+
+If you run into this, try launching VS Code from a clean shell session outside the multiplexer, or temporarily disable auto-starting the multiplexer in your shell profile.
+
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to open an issue or submit a pull request.
