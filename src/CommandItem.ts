@@ -9,6 +9,10 @@ const managedTerminals = new Map<string, vscode.Terminal[]>();
 const _onDidChangeState = new vscode.EventEmitter<void>();
 export const onDidChangeTerminalState = _onDidChangeState.event;
 
+export function isCommandRunning(id: string): boolean {
+  return runningCommands.has(id);
+}
+
 export function focusTerminalForLabel(label: string): void {
   const list = managedTerminals.get(label) ?? [];
   const open = list.find((t) => t.exitStatus === undefined);

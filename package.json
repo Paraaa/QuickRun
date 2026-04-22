@@ -33,47 +33,51 @@
     "commands": [
       {
         "command": "quickrun.addCommand",
-        "title": "Add Command",
+        "title": "QuickRun: Add Command",
         "icon": "$(add)"
       },
       {
         "command": "quickrun.refreshCommands",
-        "title": "Refresh Commands",
+        "title": "QuickRun: Refresh Commands",
         "icon": "$(refresh)"
       },
       {
         "command": "quickrun.executeCommand",
-        "title": "Run Command",
+        "title": "QuickRun: Run Command",
         "icon": "$(play)"
       },
       {
         "command": "quickrun.editCommand",
-        "title": "Edit Command",
+        "title": "QuickRun: Edit Command",
         "icon": "$(edit)"
       },
       {
         "command": "quickrun.deleteCommand",
-        "title": "Delete Command",
+        "title": "QuickRun: Delete Command",
         "icon": "$(trash)"
       },
       {
         "command": "quickrun.focusTerminal",
-        "title": "Focus Terminal"
+        "title": "QuickRun: Focus Terminal"
       },
       {
         "command": "quickrun.stopCommand",
-        "title": "Stop Command",
+        "title": "QuickRun: Stop Command",
         "icon": "$(stop-circle)"
       },
       {
         "command": "quickrun.deleteGroup",
-        "title": "Delete Group",
+        "title": "QuickRun: Delete Group",
         "icon": "$(trash)"
       },
       {
         "command": "quickrun.addGroup",
-        "title": "Add Group",
+        "title": "QuickRun: Add Group",
         "icon": "$(file-add)"
+      },
+      {
+        "command": "quickrun.runFromPalette",
+        "title": "QuickRun: Run Command..."
       }
     ],
     "viewsContainers": {
@@ -95,6 +99,36 @@
       ]
     },
     "menus": {
+      "commandPalette": [
+        {
+          "command": "quickrun.executeCommand",
+          "when": "false"
+        },
+        {
+          "command": "quickrun.editCommand",
+          "when": "false"
+        },
+        {
+          "command": "quickrun.deleteCommand",
+          "when": "false"
+        },
+        {
+          "command": "quickrun.deleteGroup",
+          "when": "false"
+        },
+        {
+          "command": "quickrun.focusTerminal",
+          "when": "false"
+        },
+        {
+          "command": "quickrun.stopCommand",
+          "when": "false"
+        },
+        {
+          "command": "quickrun.refreshCommands",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "quickrun.addCommand",
