@@ -145,6 +145,13 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "quickrunPanel.focus",
+        "key": "ctrl+shift+q",
+        "mac": "cmd+shift+q"
+      }
+    ],
     "configuration": {
       "title": "QuickRun",
       "properties": {

@@ -20,7 +20,7 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 
 *Stop retyping the same commands. Save them once, run them in one click.*
 
-![QuickRun in action](assets/example.gif)
+![QuickRun in action](assets/quickrun.gif)
 
 </div>
 
