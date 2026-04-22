@@ -1,7 +1,8 @@
 # Changelog
 
 ## [0.0.9] - 2026-04-22
-- Reduce size of gif in the README.md
+- Compress demo GIF in README.md
+- Add default keybinding `Ctrl+Shift+Q` (`Cmd+Shift+Q` on macOS) to open the QuickRun panel (can be changed via Keyboard Shortcuts)
 
 ## [0.0.8] - 2026-04-15
 - Update readme containing a section on known issue
