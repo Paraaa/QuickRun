@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CommandsProvider } from './CommandsProvider';
 import { CommandItem, focusTerminalForLabel, stopCommandForLabel } from './CommandItem';
 import { CommandPanel } from './CommandPanel';
+import { runFromPalette } from './CommandPalette';
 import { CommandStore } from './CommandStore';
 import { ConfigLoader } from './ConfigLoader';
 import { QuickRunCommand, ConfigScope } from './types';
@@ -75,6 +76,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     'quickrun.stopCommand': (commandItem: CommandItem) =>
       stopCommandForLabel(commandItem.data.label),
+
+    'quickrun.runFromPalette': () => runFromPalette(commandStore),
   };
 
   const disposables = Object.entries(commands).map(([command, callback]) =>
