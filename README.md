@@ -41,6 +41,7 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 | | |
 |---|---|
 | ▶ **One-click run** | Execute any command instantly from the sidebar panel |
+| 🔍 **Command palette** | Run any saved command via `Ctrl+Shift+P`: *QuickRun: Run Command...*, grouped and searchable by name or shell command ||
 | 🔄 **Live status indicator** | Running commands show an animated spinner and a `running` badge so you always know what's active |
 | 🖥 **Per-command terminal mode** | Choose per command: reuse the same terminal across runs, or always open a fresh one |
 | 📁 **Groups** | Fold related commands together for a clean, organised panel |
