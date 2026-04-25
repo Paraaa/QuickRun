@@ -1,5 +1,13 @@
 # Changelog
 
+
+## [1.0.0] - 2026-04-25
+### Added
+- **Auto-Setup**: new `$(sparkle)` button in the sidebar title bar analyses the current project using a Copilot language model and automatically populates the sidebar with suggested commands and groups. A model picker lets you choose which model to use, with curated quality-tier recommendations.
+- **Check for New Commands**: new `$(sync)` button re-runs the analysis and shows only commands not already present in the sidebar — useful when a project evolves and new scripts are added.
+- **Welcome view**: when the sidebar is empty, a welcome message with an "Auto-Setup from project" button is shown instead of a blank panel.
+
+
 ## [0.0.9] - 2026-04-22
 - Compress demo GIF in README.md
 - Add default keybinding `Ctrl+Shift+Q` (`Cmd+Shift+Q` on macOS) to open the QuickRun panel (can be changed via Keyboard Shortcuts)

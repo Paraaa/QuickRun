@@ -25,7 +25,7 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 </div>
 
 
-## 📦 Installation
+## 📦 Setup
 
 **VS Code** — search for *QuickRun* in the Extensions panel, or install directly from the marketplace:
 
@@ -35,13 +35,27 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 
 [![Install from Open VSX](https://img.shields.io/badge/Install-Open%20VSX-E8524A?style=for-the-badge&logo=eclipseide&logoColor=white&labelColor=1a2233)](https://open-vsx.org/extension/andrejschwanke/quickrun)
 
+### ✨ Auto-Setup
+
+Already have a project open? Let QuickRun configure itself automatically. Click the **Auto-Setup** button in the sidebar toolbar. QuickRun will use GitHub Copilot to analyse the workspace, find runnable commands across your project and then present a preview list for you to confirm before anything is added.
+
+<div align="center">
+<img src="assets/Auto-Setup.png" alt="Auto-Setup button in the QuickRun sidebar toolbar" width="300" />
+</div>
+
+A **model picker** lets you choose which LLM model to use.
+
+Once your sidebar is populated, the **Check for New Commands** button re-runs the analysis and shows only commands not yet in your sidebar.
+
+> Auto-Setup requires GitHub Copilot extension to be installed and signed in.
+
 
 ## ✨ Features
 
 | | |
 |---|---|
 | ▶ **One-click run** | Execute any command instantly from the sidebar panel |
-| 🔍 **Command palette** | Run any saved command via `Ctrl+Shift+P`: *QuickRun: Run Command...*, grouped and searchable by name or shell command ||
+| 🔍 **Command palette** | Run any saved command via `Ctrl+Shift+P`: *QuickRun: Run Command...*, grouped and searchable by name or shell command |
 | 🔄 **Live status indicator** | Running commands show an animated spinner and a `running` badge so you always know what's active |
 | 🖥 **Per-command terminal mode** | Choose per command: reuse the same terminal across runs, or always open a fresh one |
 | 📁 **Groups** | Fold related commands together for a clean, organised panel |
@@ -53,142 +67,16 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 ## 🚀 Getting Started
 
 1. Click the **QuickRun icon** in the Activity Bar
-2. Click **`+`** (Add Command) in the panel toolbar
-3. Fill in a label, the command to run, optionally pick an icon and group, choose a scope (**Project** or **Global**), then click **Add Command**
-4. Click the **▶ play** button next to any command to run it in the terminal
-
-
-## 💡 Use Cases
-
-<details>
-<summary><strong>Web / Full-stack</strong></summary>
-
-Save `npm run dev`, `npm run build`, and `npm test` as a project group, commit `.vscode/quickrun.json`, and every teammate gets the same commands on clone.
-
-</details>
-
-<details>
-<summary><strong>Django / Python</strong></summary>
-
-Keep `python manage.py runserver`, `makemigrations`, `migrate`, and `createsuperuser` in a project group so you never mistype them again.
-
-</details>
-
-<details>
-<summary><strong>Docker</strong></summary>
-
-Store `docker compose up -d`, `docker compose down`, and `docker ps` as global commands so they are available in every workspace.
-
-</details>
-
-<details>
-<summary><strong>Monorepo</strong></summary>
-
-Create a group per package (`frontend`, `backend`, `shared`) with the relevant build and test commands for each.
-
-</details>
-
-<details>
-<summary><strong>DevOps / Scripts</strong></summary>
-
-Save long one-liners (`kubectl get pods -n production`, `ssh deploy@myserver`) globally so they are always one click away.
-
-</details>
-
-
-## 🔭 Scopes
-
-The panel shows a **`project`** or **`global`** badge next to each item so you always know where it lives.
-
-| Scope | Stored in | Best for |
-|---|---|---|
-| **Project** | `.vscode/quickrun.json` | Commands specific to this repo — commit the file so teammates get them too |
-| **Global** | VS Code `settings.json` | Commands you want available everywhere (e.g. `git status`, `docker ps`) |
+2. Click **Auto-Setup** to populate the sidebar automatically, or **`+`** to add a command manually
+3. Click the **▶ play** button next to any command to run it
 
 
 ## ⚙️ Configuration
 
-### Global commands (`settings.json`)
+Commands are stored in `.vscode/quickrun.json` (project scope, commit to share with your team) or in `settings.json` under the `quickrun.global` key (global scope, available in every workspace).
 
-The `quickrun.global` setting stores your global commands and groups. It is managed automatically by the extension, but you can also edit it directly:
+See [docs/configuration.md](docs/configuration.md) for the full JSON format and all available fields.
 
-```json
-"quickrun.global": {
-  "groups": [
-    {
-      "id": "docker-group",
-      "label": "Docker",
-      "icon": "server"
-    }
-  ],
-  "commands": [
-    {
-      "id": "a1b2c3d4-...",
-      "label": "Compose up",
-      "customCommand": "docker compose up -d",
-      "icon": "play",
-      "groupId": "docker-group"
-    },
-    {
-      "id": "b2c3d4e5-...",
-      "label": "Compose down",
-      "customCommand": "docker compose down",
-      "icon": "stop",
-      "groupId": "docker-group"
-    },
-    {
-      "id": "c3d4e5f6-...",
-      "label": "List containers",
-      "customCommand": "docker ps",
-      "icon": "list-ordered",
-      "groupId": "docker-group"
-    }
-  ]
-}
-```
-
-### Project config (`.vscode/quickrun.json`)
-
-Created automatically when you save your first project-scoped command. Commit this file to share commands with your team:
-
-```json
-{
-  "groups": [
-    { "id": "dev-group",  "label": "Dev",      "icon": "code"     },
-    { "id": "db-group",   "label": "Database",  "icon": "database" }
-  ],
-  "commands": [
-    {
-      "id": "d4e5f6g7-...",
-      "label": "Run server",
-      "customCommand": "python manage.py runserver",
-      "icon": "play",
-      "groupId": "dev-group"
-    },
-    {
-      "id": "e5f6g7h8-...",
-      "label": "Run tests",
-      "customCommand": "python manage.py test",
-      "icon": "beaker",
-      "groupId": "dev-group"
-    },
-    {
-      "id": "f6g7h8i9-...",
-      "label": "Migrate",
-      "customCommand": "python manage.py migrate",
-      "icon": "database",
-      "groupId": "db-group"
-    },
-    {
-      "id": "g7h8i9j0-...",
-      "label": "Make migrations",
-      "customCommand": "python manage.py makemigrations",
-      "icon": "git-commit",
-      "groupId": "db-group"
-    }
-  ]
-}
-```
 
 ## ⚠️ Known Issues
 

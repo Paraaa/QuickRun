@@ -7,6 +7,7 @@ import { CommandStore } from './CommandStore';
 import { ConfigLoader } from './ConfigLoader';
 import { QuickRunCommand, ConfigScope } from './types';
 import { GroupItem } from './GroupItem';
+import { runAutoSetup } from './AutoSetup';
 
 export async function activate(context: vscode.ExtensionContext) {
   const configLoader = new ConfigLoader(context);
@@ -78,6 +79,9 @@ export async function activate(context: vscode.ExtensionContext) {
       stopCommandForLabel(commandItem.data.label),
 
     'quickrun.runFromPalette': () => runFromPalette(commandStore),
+
+    'quickrun.autoSetup': () => runAutoSetup(commandStore),
+    'quickrun.autoSetupRecheck': () => runAutoSetup(commandStore, true),
   };
 
   const disposables = Object.entries(commands).map(([command, callback]) =>
