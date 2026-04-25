@@ -28,7 +28,11 @@ export async function activate(context: vscode.ExtensionContext) {
   configLoader.watchProject();
 
   const commandsProvider = new CommandsProvider(commandStore);
-  vscode.window.registerTreeDataProvider('quickrunPanel', commandsProvider);
+  const treeView = vscode.window.createTreeView('quickrunPanel', {
+    treeDataProvider: commandsProvider,
+    dragAndDropController: commandsProvider,
+  });
+  context.subscriptions.push(treeView);
   const commands: Record<string, (...args: any[]) => void | Promise<void>> = {
     'quickrun.addCommand': (groupItem?: GroupItem) => {
       CommandPanel.open(
