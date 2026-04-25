@@ -209,7 +209,11 @@ export async function analyseProject(
 
   const prompt = `The workspace root is: ${workspaceRoot}\n\n${GOAL_PROMPT}`;
 
-  const tools = [...vscode.lm.tools];
+  // Only use a subset of tools that are relevant to file searching, to increase the chances of the model using them correctly.
+  const FILE_TOOL = /\b(file|dir|directory|read|list|search|find|glob|workspace)\b/i;
+  const tools = vscode.lm.tools.filter(
+    (t) => FILE_TOOL.test(t.name) || FILE_TOOL.test(t.description),
+  );
   const messages: vscode.LanguageModelChatMessage[] = [
     vscode.LanguageModelChatMessage.User(prompt),
   ];
