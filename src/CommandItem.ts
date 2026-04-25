@@ -139,7 +139,7 @@ export class CommandItem extends vscode.TreeItem {
     const subs: vscode.Disposable[] = [];
     let freed = false;
     const markFree = () => {
-      if (freed) return;
+      if (freed) { return; }
       freed = true;
       subs.forEach((s) => s.dispose());
       if (commandId) {
