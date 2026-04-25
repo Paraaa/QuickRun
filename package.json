@@ -76,6 +76,11 @@
         "icon": "$(file-add)"
       },
       {
+        "command": "quickrun.editGroup",
+        "title": "QuickRun: Edit Group",
+        "icon": "$(edit)"
+      },
+      {
         "command": "quickrun.runFromPalette",
         "title": "QuickRun: Run Command..."
       },
@@ -130,6 +135,10 @@
         },
         {
           "command": "quickrun.deleteGroup",
+          "when": "false"
+        },
+        {
+          "command": "quickrun.editGroup",
           "when": "false"
         },
         {
@@ -207,9 +216,14 @@
           "group": "inline@1"
         },
         {
-          "command": "quickrun.deleteGroup",
+          "command": "quickrun.editGroup",
           "when": "view == quickrunPanel && viewItem == group",
           "group": "inline@2"
+        },
+        {
+          "command": "quickrun.deleteGroup",
+          "when": "view == quickrunPanel && viewItem == group",
+          "group": "inline@3"
         }
       ]
     },
