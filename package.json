@@ -78,6 +78,16 @@
       {
         "command": "quickrun.runFromPalette",
         "title": "QuickRun: Run Command..."
+      },
+      {
+        "command": "quickrun.autoSetup",
+        "title": "QuickRun: Auto-Setup Project",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "quickrun.autoSetupRecheck",
+        "title": "QuickRun: Check for New Commands",
+        "icon": "$(sync)"
       }
     ],
     "viewsContainers": {
@@ -98,6 +108,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "quickrunPanel",
+        "contents": "No commands yet.\n[Auto-Setup from project](command:quickrun.autoSetup)\nor [Add a command manually](command:quickrun.addCommand)."
+      }
+    ],
     "menus": {
       "commandPalette": [
         {
@@ -127,6 +143,14 @@
         {
           "command": "quickrun.refreshCommands",
           "when": "false"
+        },
+        {
+          "command": "quickrun.autoSetup",
+          "when": "false"
+        },
+        {
+          "command": "quickrun.autoSetupRecheck",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -144,6 +168,16 @@
           "command": "quickrun.refreshCommands",
           "when": "view == quickrunPanel",
           "group": "navigation@3"
+        },
+        {
+          "command": "quickrun.autoSetup",
+          "when": "view == quickrunPanel",
+          "group": "navigation@4"
+        },
+        {
+          "command": "quickrun.autoSetupRecheck",
+          "when": "view == quickrunPanel",
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [
