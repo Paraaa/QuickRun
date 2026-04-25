@@ -101,6 +101,18 @@ export class CommandStore {
     this._onDidChange.fire();
   }
 
+  async editGroup(id: string, data: Partial<QuickRunGroup>): Promise<void> {
+    for (const bucket of [this.projectGroups, this.globalGroups]) {
+      const index = bucket.findIndex((g) => g.id === id);
+      if (index !== -1) {
+        bucket[index] = { ...bucket[index], ...data, id };
+        await this._persist(bucket[index].source);
+        this._onDidChange.fire();
+        return;
+      }
+    }
+  }
+
   async deleteGroup(group: QuickRunGroup): Promise<void> {
     const confirm = await vscode.window.showWarningMessage(
       `Are you sure you want to delete the group "${group.label}"? This will also delete all commands in this group.`,

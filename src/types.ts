@@ -15,6 +15,7 @@ export interface QuickRunGroup {
   id?: string;
   label: string;
   icon?: string;
+  color?: string;
   source: ConfigScope;
 }
 

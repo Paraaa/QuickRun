@@ -9,6 +9,16 @@ import { QuickRunCommand, ConfigScope } from './types';
 import { GroupItem } from './GroupItem';
 import { runAutoSetup } from './AutoSetup';
 
+const GROUP_COLOR_OPTIONS = [
+  { label: '$(folder) Default', description: 'No color', value: undefined as string | undefined },
+  { label: '$(folder) Red', description: '', value: 'charts.red' },
+  { label: '$(folder) Orange', description: '', value: 'charts.orange' },
+  { label: '$(folder) Yellow', description: '', value: 'charts.yellow' },
+  { label: '$(folder) Green', description: '', value: 'charts.green' },
+  { label: '$(folder) Blue', description: '', value: 'charts.blue' },
+  { label: '$(folder) Purple', description: '', value: 'charts.purple' },
+];
+
 export async function activate(context: vscode.ExtensionContext) {
   const configLoader = new ConfigLoader(context);
   const commandStore = new CommandStore(configLoader);
@@ -52,12 +62,43 @@ export async function activate(context: vscode.ExtensionContext) {
         return;
       }
       const groupName = await vscode.window.showInputBox({ prompt: 'Enter group name' });
-      if (groupName) {
-        await commandStore.addGroup({ label: groupName, source: scopePick.value });
+      if (!groupName) {
+        return;
       }
+      const colorPick = await vscode.window.showQuickPick(GROUP_COLOR_OPTIONS, {
+        title: 'Add Group - Choose Color',
+        placeHolder: 'Pick a folder color (optional)',
+      });
+      if (!colorPick) {
+        return;
+      }
+      await commandStore.addGroup({
+        label: groupName,
+        color: colorPick.value,
+        source: scopePick.value,
+      });
     },
 
     'quickrun.deleteGroup': (groupItem: GroupItem) => commandStore.deleteGroup(groupItem.data),
+
+    'quickrun.editGroup': async (groupItem: GroupItem) => {
+      const group = groupItem.data;
+      const groupName = await vscode.window.showInputBox({
+        prompt: 'Edit group name',
+        value: group.label,
+      });
+      if (!groupName) {
+        return;
+      }
+      const colorPick = await vscode.window.showQuickPick(GROUP_COLOR_OPTIONS, {
+        title: 'Edit Group - Choose Color',
+        placeHolder: 'Pick a folder color (optional)',
+      });
+      if (!colorPick) {
+        return;
+      }
+      await commandStore.editGroup(group.id!, { label: groupName, color: colorPick.value });
+    },
 
     'quickrun.executeCommand': (commandItem: CommandItem) => commandItem.execute(),
 

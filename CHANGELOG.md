@@ -6,6 +6,8 @@
 - **Auto-Setup**: new `$(sparkle)` button in the sidebar title bar analyses the current project using a Copilot language model and automatically populates the sidebar with suggested commands and groups. A model picker lets you choose which model to use, with curated quality-tier recommendations.
 - **Check for New Commands**: new `$(sync)` button re-runs the analysis and shows only commands not already present in the sidebar — useful when a project evolves and new scripts are added.
 - **Welcome view**: when the sidebar is empty, a welcome message with an "Auto-Setup from project" button is shown instead of a blank panel.
+- **Group color**: groups can now be assigned a color (Red, Orange, Yellow, Green, Blue, Purple) when created. The folder icon in the sidebar reflects the chosen color.
+- **Edit group**: groups now have an inline edit button (`$(edit)`) in the sidebar — rename the group or change its color without deleting and recreating it.
 
 
 ## [0.0.9] - 2026-04-22

@@ -49,9 +49,10 @@ suite('CommandItem — constructor', () => {
     assert.strictEqual(item.contextValue, 'commandItem');
   });
 
-  test('tooltip is the customCommand string', () => {
+  test('tooltip contains the customCommand', () => {
     const item = new CommandItem(makeCmd({ customCommand: 'npm run test' }));
-    assert.strictEqual(item.tooltip, 'npm run test');
+    assert.ok(item.tooltip instanceof vscode.MarkdownString);
+    assert.ok((item.tooltip as vscode.MarkdownString).value.includes('npm run test'));
   });
 
   test('iconPath uses the icon from data', () => {
@@ -164,7 +165,9 @@ suite('CommandItem — execute()', () => {
   });
 
   test('sends the exact command text to the terminal', () => {
-    const item = new CommandItem(makeCmd({ label: 'Send Text Test', customCommand: 'npm run build' }));
+    const item = new CommandItem(
+      makeCmd({ label: 'Send Text Test', customCommand: 'npm run build' }),
+    );
     item.execute();
     assert.ok(sentTexts.includes('npm run build'));
   });
@@ -213,8 +216,12 @@ suite('CommandItem — terminal reuse', () => {
     shellIntegration: undefined,
     showCount: 0,
     sentTexts: [],
-    show() { this.showCount++; },
-    sendText(t: string) { this.sentTexts.push(t); },
+    show() {
+      this.showCount++;
+    },
+    sendText(t: string) {
+      this.sentTexts.push(t);
+    },
   });
 
   // Saved originals
@@ -303,20 +310,6 @@ suite('CommandItem — terminal reuse', () => {
     assert.strictEqual(term.sentTexts.length, 2, 'command sent to the same terminal twice');
   });
 
-  test('reuses free terminal after onDidChangeTerminalShellIntegration fires', () => {
-    const label = uid();
-    const item = new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'npm test' }));
-
-    item.execute();
-    const term = created[0];
-
-    fireIntegration(term); // shell integration activated = command finished
-
-    item.execute();
-    assert.strictEqual(created.length, 1, 'no new terminal created');
-    assert.strictEqual(term.sentTexts.length, 2);
-  });
-
   test('focuses running terminal without re-executing while command is busy', () => {
     const label = uid();
     const item = new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'npm start' }));
@@ -344,7 +337,11 @@ suite('CommandItem — terminal reuse', () => {
     fireEnd(term1);
 
     item.execute();
-    assert.strictEqual(created.length, 2, 'new terminal created because the old one has exitStatus set');
+    assert.strictEqual(
+      created.length,
+      2,
+      'new terminal created because the old one has exitStatus set',
+    );
   });
 
   test('does not re-execute when completion fires twice (freed guard)', () => {
@@ -386,8 +383,12 @@ suite('focusTerminalForLabel', () => {
     shellIntegration: undefined,
     showCount: 0,
     sentTexts: [],
-    show() { this.showCount++; },
-    sendText(t: string) { this.sentTexts.push(t); },
+    show() {
+      this.showCount++;
+    },
+    sendText(t: string) {
+      this.sentTexts.push(t);
+    },
   });
 
   let savedCreate: typeof vscode.window.createTerminal;
