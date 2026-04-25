@@ -577,4 +577,87 @@ suite('CommandStore', () => {
       assert.strictEqual(store.getGroups()[0].label, 'B');
     });
   });
+
+  // -------------------------------------------------------------------------
+  suite('editGroup()', () => {
+    test('updates the label of a project group', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'Old Name', source: 'project' }));
+      await store.editGroup('g1', { label: 'New Name' });
+      assert.strictEqual(store.getGroups()[0].label, 'New Name');
+    });
+
+    test('updates the label of a global group', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'Old', source: 'global' }));
+      await store.editGroup('g1', { label: 'New' });
+      assert.strictEqual(store.getGroups()[0].label, 'New');
+    });
+
+    test('always preserves the original id regardless of what is passed', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'Dev', source: 'project' }));
+      await store.editGroup('g1', { label: 'Dev2', id: 'should-be-ignored' } as any);
+      assert.strictEqual(store.getGroups()[0].id, 'g1');
+    });
+
+    test('preserves fields not included in the partial update', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'Dev', icon: 'gear', source: 'project' }));
+      await store.editGroup('g1', { label: 'Development' });
+      const group = store.getGroups()[0];
+      assert.strictEqual(group.label, 'Development');
+      assert.strictEqual(group.icon, 'gear');
+    });
+
+    test('silently does nothing when the id does not match any group', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'Original', source: 'project' }));
+      await store.editGroup('non-existent-id', { label: 'Changed' });
+      assert.strictEqual(store.getGroups()[0].label, 'Original');
+    });
+
+    test('fires onDidChange after a successful edit', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', source: 'project' }));
+      let fired = false;
+      store.onDidChange(() => (fired = true));
+      await store.editGroup('g1', { label: 'New' });
+      assert.ok(fired);
+    });
+
+    test('does not fire onDidChange when the id is not found', async () => {
+      await store.load();
+      let fired = false;
+      store.onDidChange(() => (fired = true));
+      await store.editGroup('non-existent-id', { label: 'Changed' });
+      assert.ok(!fired);
+    });
+
+    test('persists to project scope after editing a project group', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', source: 'project' }));
+      loader.savedProject = null;
+      await store.editGroup('g1', { label: 'New' });
+      assert.ok(loader.savedProject !== null);
+      assert.strictEqual(loader.savedGlobal, null);
+    });
+
+    test('persists to global scope after editing a global group', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', source: 'global' }));
+      loader.savedGlobal = null;
+      await store.editGroup('g1', { label: 'New' });
+      assert.ok(loader.savedGlobal !== null);
+      assert.strictEqual(loader.savedProject, null);
+    });
+
+    test('does not affect other groups in the same scope', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'A', source: 'project' }));
+      await store.addGroup(makeGroup({ id: 'g2', label: 'B', source: 'project' }));
+      await store.editGroup('g1', { label: 'A-Renamed' });
+      assert.strictEqual(store.getGroups()[1].label, 'B');
+    });
+  });
 });

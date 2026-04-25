@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { CommandItem, focusTerminalForLabel } from '../CommandItem';
+import { CommandItem, focusTerminalForLabel, stopCommandForLabel } from '../CommandItem';
 import { GroupItem } from '../GroupItem';
 import { QuickRunCommand, QuickRunGroup } from '../types';
 
@@ -502,5 +502,261 @@ suite('GroupItem — constructor', () => {
     const grp = makeGroup({ label: 'Check' });
     const item = new GroupItem(grp);
     assert.strictEqual(item.data, grp);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CommandItem — notes tooltip
+// ---------------------------------------------------------------------------
+
+suite('CommandItem — notes tooltip', () => {
+  test('tooltip contains only the command in backticks when notes is undefined', () => {
+    const item = new CommandItem(makeCmd({ customCommand: 'npm test', notes: undefined }));
+    const md = (item.tooltip as vscode.MarkdownString).value;
+    assert.ok(md.includes('npm test'), 'Command text should appear in the tooltip');
+    assert.ok(!md.includes('---'), 'No separator expected when there are no notes');
+  });
+
+  test('tooltip contains the notes text when notes is set', () => {
+    // appendText() replaces spaces with &nbsp; — use a space-free string that appears verbatim.
+    const item = new CommandItem(
+      makeCmd({ customCommand: 'npm test', notes: 'Important' }),
+    );
+    const md = (item.tooltip as vscode.MarkdownString).value;
+    assert.ok(md.includes('Important'), 'Notes must appear in the tooltip');
+  });
+
+  test('tooltip contains both notes and the command separated by a divider', () => {
+    const item = new CommandItem(
+      makeCmd({ customCommand: 'npm-build', notes: 'Production' }),
+    );
+    const md = (item.tooltip as vscode.MarkdownString).value;
+    assert.ok(md.includes('Production'), 'Notes must appear in the tooltip');
+    assert.ok(md.includes('npm-build'), 'Command text must appear in the tooltip');
+    assert.ok(md.includes('---'), 'A Markdown divider should separate notes from the command');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Shared mock helpers for execute()-based tests
+// ---------------------------------------------------------------------------
+
+// These suites use unique per-test labels (via a seq counter) so that the
+// module-level managedTerminals/busyTerminals state never bleeds between tests.
+
+interface FakeTermEx {
+  exitStatus: vscode.TerminalExitStatus | undefined;
+  shellIntegration: undefined;
+  showCount: number;
+  sentTexts: string[];
+  disposeCount: number;
+  show(): void;
+  sendText(t: string, nl: boolean): void;
+  dispose(): void;
+}
+
+const makeTermEx = (): FakeTermEx => ({
+  exitStatus: undefined,
+  shellIntegration: undefined,
+  showCount: 0,
+  sentTexts: [],
+  disposeCount: 0,
+  show() { this.showCount++; },
+  sendText(t: string) { this.sentTexts.push(t); },
+  dispose() { this.disposeCount++; },
+});
+
+// ---------------------------------------------------------------------------
+// CommandItem — running state UI
+// (The running state is reflected when constructing a CommandItem whose id
+//  is currently in the module-level runningCommands set.)
+// ---------------------------------------------------------------------------
+
+suite('CommandItem — running state UI', () => {
+  let seq = 0;
+  const uid = () => `__running_ui_${seq++}_${Date.now()}`;
+
+  let savedCreate: typeof vscode.window.createTerminal;
+  let savedOnEnd: typeof vscode.window.onDidEndTerminalShellExecution;
+  let savedOnIntegration: typeof vscode.window.onDidChangeTerminalShellIntegration;
+
+  setup(() => {
+    savedCreate = vscode.window.createTerminal;
+    savedOnEnd = vscode.window.onDidEndTerminalShellExecution;
+    savedOnIntegration = vscode.window.onDidChangeTerminalShellIntegration;
+
+    (vscode.window as any).createTerminal = () => makeTermEx();
+    (vscode.window as any).onDidEndTerminalShellExecution = () => ({ dispose() {} });
+    (vscode.window as any).onDidChangeTerminalShellIntegration = () => ({ dispose() {} });
+  });
+
+  teardown(() => {
+    (vscode.window as any).createTerminal = savedCreate;
+    (vscode.window as any).onDidEndTerminalShellExecution = savedOnEnd;
+    (vscode.window as any).onDidChangeTerminalShellIntegration = savedOnIntegration;
+  });
+
+  test('contextValue is commandItemRunning immediately after execute() is called', () => {
+    const label = uid();
+    const data = makeCmd({ id: `id-${label}`, label, customCommand: 'npm start' });
+    new CommandItem(data).execute();
+    // Constructing a fresh CommandItem with the same data checks the live running state.
+    const live = new CommandItem(data);
+    assert.strictEqual(live.contextValue, 'commandItemRunning');
+  });
+
+  test('iconPath is loading~spin while the command is running', () => {
+    const label = uid();
+    const data = makeCmd({ id: `id-${label}`, label, customCommand: 'npm start', icon: 'gear' });
+    new CommandItem(data).execute();
+    const live = new CommandItem(data);
+    assert.strictEqual((live.iconPath as vscode.ThemeIcon).id, 'loading~spin');
+  });
+
+  test('description is "running" while the command is running', () => {
+    const label = uid();
+    const data = makeCmd({ id: `id-${label}`, label, customCommand: 'npm start', source: 'project' });
+    new CommandItem(data).execute();
+    const live = new CommandItem(data);
+    assert.strictEqual(live.description, 'running');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CommandItem — terminalMode: 'new'
+// ---------------------------------------------------------------------------
+
+suite('CommandItem — terminalMode: new', () => {
+  let seq = 0;
+  const uid = () => `__mode_new_${seq++}_${Date.now()}`;
+
+  let savedCreate: typeof vscode.window.createTerminal;
+  let savedOnEnd: typeof vscode.window.onDidEndTerminalShellExecution;
+  let savedOnIntegration: typeof vscode.window.onDidChangeTerminalShellIntegration;
+
+  let created: FakeTermEx[];
+  let endCbs: Array<(e: { terminal: FakeTermEx }) => void>;
+
+  setup(() => {
+    created = [];
+    endCbs = [];
+
+    savedCreate = vscode.window.createTerminal;
+    savedOnEnd = vscode.window.onDidEndTerminalShellExecution;
+    savedOnIntegration = vscode.window.onDidChangeTerminalShellIntegration;
+
+    (vscode.window as any).createTerminal = () => {
+      const t = makeTermEx();
+      created.push(t);
+      return t;
+    };
+    (vscode.window as any).onDidEndTerminalShellExecution = (cb: (e: any) => void) => {
+      endCbs.push(cb);
+      return { dispose() {} };
+    };
+    (vscode.window as any).onDidChangeTerminalShellIntegration = () => ({ dispose() {} });
+  });
+
+  teardown(() => {
+    (vscode.window as any).createTerminal = savedCreate;
+    (vscode.window as any).onDidEndTerminalShellExecution = savedOnEnd;
+    (vscode.window as any).onDidChangeTerminalShellIntegration = savedOnIntegration;
+  });
+
+  const fireEnd = (t: FakeTermEx) => endCbs.forEach((cb) => cb({ terminal: t }));
+
+  test('creates a fresh terminal on every run even when a free terminal exists', () => {
+    const label = uid();
+    const item = new CommandItem(
+      makeCmd({ id: `id-${label}`, label, customCommand: 'npm test', terminalMode: 'new' }),
+    );
+
+    item.execute();
+    assert.strictEqual(created.length, 1);
+    fireEnd(created[0]); // first run completes — terminal is now free
+
+    item.execute(); // second run: 'new' mode should NOT reuse the free terminal
+    assert.strictEqual(created.length, 2, 'terminalMode=new must always create a fresh terminal');
+  });
+
+  test('default terminalMode (reuse) reuses a free terminal', () => {
+    const label = uid();
+    const item = new CommandItem(
+      makeCmd({ id: `id-${label}`, label, customCommand: 'npm test' }), // terminalMode defaults to reuse
+    );
+
+    item.execute();
+    fireEnd(created[0]);
+
+    item.execute();
+    assert.strictEqual(created.length, 1, 'terminalMode=reuse must reuse the free terminal');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// stopCommandForLabel
+// ---------------------------------------------------------------------------
+
+suite('stopCommandForLabel', () => {
+  let seq = 0;
+  const uid = () => `__stop_${seq++}_${Date.now()}`;
+
+  let savedCreate: typeof vscode.window.createTerminal;
+  let savedOnEnd: typeof vscode.window.onDidEndTerminalShellExecution;
+  let savedOnIntegration: typeof vscode.window.onDidChangeTerminalShellIntegration;
+
+  let created: FakeTermEx[];
+
+  setup(() => {
+    created = [];
+
+    savedCreate = vscode.window.createTerminal;
+    savedOnEnd = vscode.window.onDidEndTerminalShellExecution;
+    savedOnIntegration = vscode.window.onDidChangeTerminalShellIntegration;
+
+    (vscode.window as any).createTerminal = () => {
+      const t = makeTermEx();
+      created.push(t);
+      return t;
+    };
+    (vscode.window as any).onDidEndTerminalShellExecution = () => ({ dispose() {} });
+    (vscode.window as any).onDidChangeTerminalShellIntegration = () => ({ dispose() {} });
+  });
+
+  teardown(() => {
+    (vscode.window as any).createTerminal = savedCreate;
+    (vscode.window as any).onDidEndTerminalShellExecution = savedOnEnd;
+    (vscode.window as any).onDidChangeTerminalShellIntegration = savedOnIntegration;
+  });
+
+  test('disposes the busy terminal for the given label', () => {
+    const label = uid();
+    new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'npm run dev' })).execute();
+    const term = created[0];
+    assert.strictEqual(term.disposeCount, 0, 'sanity: not yet disposed');
+
+    stopCommandForLabel(label);
+    assert.strictEqual(term.disposeCount, 1, 'busy terminal must be disposed by stop');
+  });
+
+  test('does nothing when no terminal is managed for the label', () => {
+    assert.doesNotThrow(() => stopCommandForLabel(`__unknown_${Date.now()}`));
+  });
+
+  test('does not dispose a free (non-busy) terminal', () => {
+    const label = uid();
+    const endCbs: Array<(e: { terminal: FakeTermEx }) => void> = [];
+    (vscode.window as any).onDidEndTerminalShellExecution = (cb: (e: any) => void) => {
+      endCbs.push(cb);
+      return { dispose() {} };
+    };
+    new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'ls' })).execute();
+    const term = created[0];
+
+    // Simulate completion — terminal is now free (not in busyTerminals)
+    endCbs.forEach((cb) => cb({ terminal: term }));
+
+    stopCommandForLabel(label);
+    assert.strictEqual(term.disposeCount, 0, 'free terminal must not be disposed');
   });
 });
