@@ -8,6 +8,7 @@ import { ConfigLoader } from './ConfigLoader';
 import { QuickRunCommand, ConfigScope } from './types';
 import { GroupItem } from './GroupItem';
 import { runAutoSetup } from './AutoSetup';
+import { installClaudeSkill } from './InstallSkill';
 
 const GROUP_COLOR_OPTIONS = [
   { label: '$(folder) Default', description: 'No color', value: undefined as string | undefined },
@@ -127,6 +128,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     'quickrun.autoSetup': () => runAutoSetup(commandStore),
     'quickrun.autoSetupRecheck': () => runAutoSetup(commandStore, true),
+
+    'quickrun.installClaudeSkill': () => installClaudeSkill(context.extensionPath),
   };
 
   const disposables = Object.entries(commands).map(([command, callback]) =>

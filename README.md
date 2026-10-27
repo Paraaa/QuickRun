@@ -35,19 +35,27 @@ No more retyping long commands. Organise them into groups, pick an icon, and run
 
 [![Install from Open VSX](https://img.shields.io/badge/Install-Open%20VSX-E8524A?style=for-the-badge&logo=eclipseide&logoColor=white&labelColor=1a2233)](https://open-vsx.org/extension/andrejschwanke/quickrun)
 
-### ✨ Auto-Setup
+## ✨ Auto-Setup
 
-Already have a project open? Let QuickRun configure itself automatically. Click the **Auto-Setup** button in the sidebar toolbar. QuickRun will use GitHub Copilot to analyse the workspace, find runnable commands across your project and then present a preview list for you to confirm before anything is added.
+Already have a project open? Let AI find every runnable command in your workspace (package.json scripts, Makefile targets, docker compose, CI workflows and more) and fill the sidebar for you. You always review the list before anything is added, and existing commands are never changed, so you can re-run it any time to pick up new ones.
 
-<div align="center">
-<img src="assets/Auto-Setup.png" alt="Auto-Setup button in the QuickRun sidebar toolbar" width="300" />
-</div>
+### <img src="https://img.shields.io/badge/-%20-D97757?logo=claude&logoColor=white" height="20" alt="Claude" /> Claude Code
 
-A **model picker** lets you choose which LLM model to use.
+QuickRun ships a `quickrun-setup` skill for [Claude Code](https://claude.com/claude-code):
 
-Once your sidebar is populated, the **Check for New Commands** button re-runs the analysis and shows only commands not yet in your sidebar.
+1. Run **QuickRun: Install Claude Code Skill** from the Command Palette (or the `···` menu of the sidebar).
+2. Choose **Global** (`~/.claude/skills/`, available in every project) or **This workspace** (`.claude/skills/`, commit it to share with your team).
+3. In Claude Code, run `/quickrun-setup` or just ask it to *"set up my QuickRun commands"*.
 
-> Auto-Setup requires GitHub Copilot extension to be installed and signed in.
+Claude shows the commands it found and writes them to `.vscode/quickrun.json` once you confirm.
+
+> Re-run the install command after updating the extension to get the latest version of the skill.
+
+### <img src="https://img.shields.io/badge/-%20-1a2233?logo=githubcopilot&logoColor=white" height="20" alt="GitHub Copilot" /> GitHub Copilot
+
+Open the `···` menu in the sidebar title bar and choose **Auto-Setup with GitHub Copilot** (or click **Auto-Setup from project** while the sidebar is empty), then pick a model. Later, **Check for New Commands with GitHub Copilot** in the same menu re-runs the analysis and shows only commands not yet in your sidebar.
+
+> Requires the GitHub Copilot extension to be installed and signed in.
 
 
 ## ✨ Features
@@ -67,7 +75,7 @@ Once your sidebar is populated, the **Check for New Commands** button re-runs th
 ## 🚀 Getting Started
 
 1. Click the **QuickRun icon** in the Activity Bar
-2. Click **Auto-Setup** to populate the sidebar automatically, or **`+`** to add a command manually
+2. Populate the sidebar automatically with [Claude Code or GitHub Copilot](#-auto-setup) from the `···` menu, or click **`+`** to add a command manually
 3. Click the **▶ play** button next to any command to run it
 
 
