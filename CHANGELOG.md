@@ -7,6 +7,7 @@
 
 ### Changed
 - **Command panel**: redesigned in the style of VS Code's Settings editor, with a short explanation for every option. The command field now supports multi-line commands (Shift+Enter for a new line).
+- **Command panel**: the icon picker shows a row of common icons, with *Show all* for the full list. The tab title now shows which command you are editing.
 - **Sidebar**: *Auto-Setup* and *Check for New Commands* (renamed to *Auto-Setup with GitHub Copilot* and *Check for New Commands with GitHub Copilot*) moved from the title bar into the `···` menu, after *Install Claude Code Skill*, to declutter the toolbar.
 - **Auto-Setup**: smarter command discovery — uses the project's package manager (pnpm/yarn/bun/uv/poetry), covers monorepo workspaces, Deno, `.vscode/tasks.json`, Ruby, PHP, Elixir, CMake and more, skips internal sub-step scripts, flags destructive commands in their notes, and opens long-running processes (dev servers, watchers) in a new terminal.
 

@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { escapeHtml, ALLICONS } from '../utils';
+import { escapeHtml, ALLICONS, SUGGESTED_ICONS } from '../utils';
 
 suite('utils — escapeHtml', () => {
   test('returns empty string unchanged', () => {
@@ -85,5 +85,16 @@ suite('utils — ALLICONS', () => {
     assert.ok(ALLICONS.includes('gear'));
     assert.ok(ALLICONS.includes('folder'));
     assert.ok(ALLICONS.includes('trash'));
+  });
+});
+
+suite('utils — SUGGESTED_ICONS', () => {
+  test('every suggested icon is also in ALLICONS', () => {
+    const missing = SUGGESTED_ICONS.filter((icon) => !ALLICONS.includes(icon));
+    assert.deepStrictEqual(missing, []);
+  });
+
+  test('contains no duplicates', () => {
+    assert.strictEqual(new Set(SUGGESTED_ICONS).size, SUGGESTED_ICONS.length);
   });
 });
