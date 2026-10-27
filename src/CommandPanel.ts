@@ -289,7 +289,7 @@ export class CommandPanel {
             margin-bottom: 8px;
           }
           .setting-desc code {
-            font-family: var(--vscode-editor-font-family);
+            font-family: var(--vscode-editor-font-family, monospace), ui-monospace, "Cascadia Code", Menlo, Consolas, "DejaVu Sans Mono", monospace;
           }
           .field-hint {
             margin-top: 5px;
@@ -367,12 +367,13 @@ export class CommandPanel {
           }
           .term-bar .codicon { font-size: 13px; }
           .term-bar .term-mode { margin-left: auto; text-transform: none; letter-spacing: normal; }
+          /* The editor font setting may lack a generic fallback ("Geist Mono, Fira Code"); without one the webview shows a serif font. */
           .term-line {
             display: flex;
             gap: 10px;
             align-items: flex-start;
             padding: 10px 12px 12px;
-            font-family: var(--vscode-editor-font-family);
+            font-family: var(--vscode-editor-font-family, monospace), ui-monospace, "Cascadia Code", Menlo, Consolas, "DejaVu Sans Mono", monospace;
             font-size: var(--vscode-editor-font-size, 13px);
             line-height: 1.55;
           }
