@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { CommandItem, focusTerminalForLabel, stopCommandForLabel } from '../CommandItem';
+import { CommandItem, focusTerminalForCommand, stopCommand } from '../CommandItem';
 import { GroupItem } from '../GroupItem';
 import { QuickRunCommand, QuickRunGroup } from '../types';
 
@@ -159,14 +159,14 @@ suite('CommandItem — execute()', () => {
   });
 
   test('does not show warning for a valid command', () => {
-    const item = new CommandItem(makeCmd({ customCommand: 'echo hi' }));
+    const item = new CommandItem(makeCmd({ id: 'id-sends-hi', customCommand: 'echo hi' }));
     item.execute();
     assert.strictEqual(warnMessages.length, 0);
   });
 
   test('sends the exact command text to the terminal', () => {
     const item = new CommandItem(
-      makeCmd({ label: 'Send Text Test', customCommand: 'npm run build' }),
+      makeCmd({ id: 'id-send-text', label: 'Send Text Test', customCommand: 'npm run build' }),
     );
     item.execute();
     assert.ok(sentTexts.includes('npm run build'));
@@ -178,14 +178,14 @@ suite('CommandItem — execute()', () => {
       capturedName = name;
       return fakeTerminal;
     };
-    const item = new CommandItem(makeCmd({ label: 'My Server', customCommand: 'ls' }));
+    const item = new CommandItem(makeCmd({ id: 'id-my-server', label: 'My Server', customCommand: 'ls' }));
     item.execute();
     assert.strictEqual(capturedName, 'My Server');
   });
 
   test('sends the command to a managed terminal when one already exists for the label', () => {
     // First execute registers the terminal in managedTerminals.
-    const item = new CommandItem(makeCmd({ label: 'Managed Test', customCommand: 'echo hi' }));
+    const item = new CommandItem(makeCmd({ id: 'id-managed', label: 'Managed Test', customCommand: 'echo hi' }));
     item.execute();
     // As long as no error is thrown and sendText was called, the managed path ran.
     assert.ok(sentTexts.includes('echo hi'));
@@ -290,7 +290,7 @@ suite('CommandItem — terminal reuse', () => {
       created.push(t);
       return t;
     };
-    new CommandItem(makeCmd({ label, customCommand: 'echo hi' })).execute();
+    new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'echo hi' })).execute();
     assert.strictEqual(capturedName, label);
     assert.strictEqual(created.length, 1);
   });
@@ -362,10 +362,10 @@ suite('CommandItem — terminal reuse', () => {
 });
 
 // ---------------------------------------------------------------------------
-// focusTerminalForLabel
+// focusTerminalForCommand
 // ---------------------------------------------------------------------------
 
-suite('focusTerminalForLabel', () => {
+suite('focusTerminalForCommand', () => {
   let seq = 0;
   const uid = () => `__focus_${seq++}_${Date.now()}`;
 
@@ -423,26 +423,26 @@ suite('focusTerminalForLabel', () => {
 
   test('shows the open terminal for a known label', () => {
     const label = uid();
-    new CommandItem(makeCmd({ label, customCommand: 'echo' })).execute();
+    new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'echo' })).execute();
     const term = created[0];
     const showBefore = term.showCount;
 
-    focusTerminalForLabel(label);
+    focusTerminalForCommand(makeCmd({ id: `id-${label}`, label }));
     assert.ok(term.showCount > showBefore);
   });
 
   test('does nothing for an unknown label', () => {
-    assert.doesNotThrow(() => focusTerminalForLabel('__no_such_label__'));
+    assert.doesNotThrow(() => focusTerminalForCommand(makeCmd({ id: '__no_such_id__' })));
   });
 
   test('does nothing when terminal has exited', () => {
     const label = uid();
-    new CommandItem(makeCmd({ label, customCommand: 'echo' })).execute();
+    new CommandItem(makeCmd({ id: `id-${label}`, label, customCommand: 'echo' })).execute();
     const term = created[0];
     (term as any).exitStatus = { code: 0 };
     const showBefore = term.showCount;
 
-    focusTerminalForLabel(label);
+    focusTerminalForCommand(makeCmd({ id: `id-${label}`, label }));
     assert.strictEqual(term.showCount, showBefore, 'should not show an exited terminal');
   });
 });
@@ -694,10 +694,10 @@ suite('CommandItem — terminalMode: new', () => {
 });
 
 // ---------------------------------------------------------------------------
-// stopCommandForLabel
+// stopCommand
 // ---------------------------------------------------------------------------
 
-suite('stopCommandForLabel', () => {
+suite('stopCommand', () => {
   let seq = 0;
   const uid = () => `__stop_${seq++}_${Date.now()}`;
 
@@ -735,12 +735,23 @@ suite('stopCommandForLabel', () => {
     const term = created[0];
     assert.strictEqual(term.disposeCount, 0, 'sanity: not yet disposed');
 
-    stopCommandForLabel(label);
+    stopCommand(makeCmd({ id: `id-${label}`, label }));
     assert.strictEqual(term.disposeCount, 1, 'busy terminal must be disposed by stop');
   });
 
+  test('only stops the command with the matching id when labels collide', () => {
+    const label = uid();
+    new CommandItem(makeCmd({ id: `a-${label}`, label, customCommand: 'npm run dev' })).execute();
+    new CommandItem(makeCmd({ id: `b-${label}`, label, customCommand: 'npm run dev' })).execute();
+    assert.strictEqual(created.length, 2, 'same-label commands must get separate terminals');
+
+    stopCommand(makeCmd({ id: `b-${label}`, label }));
+    assert.strictEqual(created[0].disposeCount, 0);
+    assert.strictEqual(created[1].disposeCount, 1);
+  });
+
   test('does nothing when no terminal is managed for the label', () => {
-    assert.doesNotThrow(() => stopCommandForLabel(`__unknown_${Date.now()}`));
+    assert.doesNotThrow(() => stopCommand(makeCmd({ id: `__unknown_${Date.now()}` })));
   });
 
   test('does not dispose a free (non-busy) terminal', () => {
@@ -756,7 +767,7 @@ suite('stopCommandForLabel', () => {
     // Simulate completion — terminal is now free (not in busyTerminals)
     endCbs.forEach((cb) => cb({ terminal: term }));
 
-    stopCommandForLabel(label);
+    stopCommand(makeCmd({ id: `id-${label}`, label }));
     assert.strictEqual(term.disposeCount, 0, 'free terminal must not be disposed');
   });
 });
