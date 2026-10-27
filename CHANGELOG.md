@@ -10,6 +10,10 @@
 
 ### Fixed
 - **Auto-Setup**: commands could be imported with the non-existent `deploy` icon and appear without an icon. Unknown icons now fall back to `terminal`.
+- **Terminals**: two commands with the same label shared one terminal, so running, focusing or stopping one affected the other. Terminals are now tracked per command.
+- **Command panel**: editing a command while the panel was already open showed the previously opened command. The panel now switches to the command you clicked.
+- **Command panel**: the Terminal Behaviour and Save to toggles and the icon picker can now be used with the keyboard (Tab, arrow keys, Enter/Space, Escape).
+- **Command panel**: pressing Enter on a button (e.g. Cancel or the icon picker) no longer submits the form. Enter only submits from the text fields.
 
 
 ## [1.0.0] - 2026-04-25
