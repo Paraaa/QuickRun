@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import crypto from 'crypto';
 import { ALLICONS, GROUP_COLORS, SUGGESTED_ICONS, escapeHtml } from './utils';
 import { ConfigScope, QuickRunCommand, QuickRunGroup } from './types';
 import { GroupItem } from './GroupItem';
@@ -160,6 +161,8 @@ export class CommandPanel {
     groupItem?: GroupItem,
     existing?: QuickRunCommand,
   ): string {
+    // Only the panel's own script (carrying this nonce) may run; no inline handlers.
+    const nonce = crypto.randomBytes(16).toString('base64');
     const codiconsUri = webview.asWebviewUri(
       vscode.Uri.joinPath(
         this.extensionUri,
@@ -232,8 +235,7 @@ export class CommandPanel {
            aria-label="${name}"
            tabindex="${name === selectedIcon ? '0' : '-1'}"
            data-icon="${name}"
-           title="${name}"
-           onclick="selectIcon('${name}')">
+           title="${name}">
         <i class="codicon codicon-${name}"></i>
       </button>`,
     ).join('');
@@ -247,7 +249,7 @@ export class CommandPanel {
           content="default-src 'none';
                    font-src ${webview.cspSource};
                    style-src ${webview.cspSource} 'unsafe-inline';
-                   script-src 'unsafe-inline';">
+                   script-src 'nonce-${nonce}';">
         <link href="${codiconsUri}" rel="stylesheet"/>
         <style>
           *, *::before, *::after { box-sizing: border-box; }
@@ -287,7 +289,7 @@ export class CommandPanel {
             margin-bottom: 8px;
           }
           .setting-desc code {
-            font-family: var(--vscode-editor-font-family);
+            font-family: var(--vscode-editor-font-family, monospace), ui-monospace, "Cascadia Code", Menlo, Consolas, "DejaVu Sans Mono", monospace;
           }
           .field-hint {
             margin-top: 5px;
@@ -365,12 +367,13 @@ export class CommandPanel {
           }
           .term-bar .codicon { font-size: 13px; }
           .term-bar .term-mode { margin-left: auto; text-transform: none; letter-spacing: normal; }
+          /* The editor font setting may lack a generic fallback ("Geist Mono, Fira Code"); without one the webview shows a serif font. */
           .term-line {
             display: flex;
             gap: 10px;
             align-items: flex-start;
             padding: 10px 12px 12px;
-            font-family: var(--vscode-editor-font-family);
+            font-family: var(--vscode-editor-font-family, monospace), ui-monospace, "Cascadia Code", Menlo, Consolas, "DejaVu Sans Mono", monospace;
             font-size: var(--vscode-editor-font-size, 13px);
             line-height: 1.55;
           }
@@ -622,7 +625,7 @@ export class CommandPanel {
             </div>
             <div class="icon-picker" id="icon-picker">
               <div class="icon-search-wrap">
-                <input type="text" placeholder="Search icons…" oninput="filterIcons(this.value)" id="icon-search" aria-label="Search icons"/>
+                <input type="text" placeholder="Search icons…" id="icon-search" aria-label="Search icons"/>
               </div>
               <div class="icon-grid" id="icon-grid" role="listbox" aria-label="Icons">${iconGrid}</div>
             </div>
@@ -674,11 +677,11 @@ export class CommandPanel {
         </div>
 
         <div class="actions">
-          <button type="button" class="btn-secondary" onclick="cancel()">Cancel</button>
-          <button type="button" class="btn-primary" onclick="submit()">${existing ? 'Save Changes' : 'Add Command'}</button>
+          <button type="button" class="btn-secondary" id="cancel-button">Cancel</button>
+          <button type="button" class="btn-primary" id="submit-button">${existing ? 'Save Changes' : 'Add Command'}</button>
         </div>
 
-        <script>
+        <script nonce="${nonce}">
           const vscode = acquireVsCodeApi();
 
           function setError(input, errorId, invalid) {
@@ -869,6 +872,12 @@ export class CommandPanel {
           }
 
           // Down arrow in the search box jumps into the grid; Enter picks the first match.
+          iconSearch.addEventListener('input', () => filterIcons(iconSearch.value));
+          iconGrid.addEventListener('click', e => {
+            const item = e.target.closest('.icon-item');
+            if (item) { selectIcon(item.dataset.icon); }
+          });
+
           iconSearch.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -954,6 +963,9 @@ export class CommandPanel {
           function cancel() {
             vscode.postMessage({ type: 'cancel' });
           }
+
+          document.getElementById('submit-button').addEventListener('click', submit);
+          document.getElementById('cancel-button').addEventListener('click', cancel);
 
           // ── Keyboard ──
 

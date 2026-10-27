@@ -2,7 +2,7 @@
   "name": "quickrun",
   "displayName": "QuickRun",
   "description": "Save and run any terminal command from the VS Code sidebar in one click.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "andrejschwanke",
   "license": "MIT",
   "icon": "assets/QuickRun_no_text_transparent.png",
@@ -120,7 +120,7 @@
     "viewsWelcome": [
       {
         "view": "quickrunPanel",
-        "contents": "No commands yet.\n[Auto-Setup from project](command:quickrun.autoSetup)\nor [Add a command manually](command:quickrun.addCommand)."
+        "contents": "No commands yet. Let AI find your project's commands:\n[Install Claude Code Skill](command:quickrun.installClaudeSkill)\n[Auto-Setup with GitHub Copilot](command:quickrun.autoSetup)\nor [add a command manually](command:quickrun.addCommand)."
       }
     ],
     "menus": {

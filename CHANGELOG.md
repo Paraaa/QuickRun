@@ -1,17 +1,20 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.0] - 2026-10-27
 ### Added
 - **Claude Code skill**: new `QuickRun: Install Claude Code Skill` command installs a bundled `quickrun-setup` skill into `~/.claude/skills/` or the workspace's `.claude/skills/`. In Claude Code, the skill discovers the project's commands, asks for confirmation and merges them into `.vscode/quickrun.json`. You can re-run the skill to update the commands.
 - **Command panel**: create a group without leaving the panel. Choose *+ New group…* in the Group dropdown, enter a name and pick a color. The group is created when you save the command, in the same scope as the command.
+- **What's new notification**: after a feature update, QuickRun shows a short notification with a link to the changelog. Patch updates stay quiet, and *Don't Show Again* turns it off.
 
 ### Changed
 - **Command panel**: redesigned in the style of VS Code's Settings editor, with a short explanation for every option. The command field now supports multi-line commands (Shift+Enter for a new line).
 - **Command panel**: the icon picker shows a row of common icons, with *Show all* for the full list. The tab title now shows which command you are editing.
 - **Sidebar**: *Auto-Setup* and *Check for New Commands* (renamed to *Auto-Setup with GitHub Copilot* and *Check for New Commands with GitHub Copilot*) moved from the title bar into the `···` menu, after *Install Claude Code Skill*, to declutter the toolbar.
+- **Welcome view**: the empty sidebar now also offers *Install Claude Code Skill*, next to *Auto-Setup with GitHub Copilot*.
 - **Auto-Setup**: smarter command discovery — uses the project's package manager (pnpm/yarn/bun/uv/poetry), covers monorepo workspaces, Deno, `.vscode/tasks.json`, Ruby, PHP, Elixir, CMake and more, skips internal sub-step scripts, flags destructive commands in their notes, and opens long-running processes (dev servers, watchers) in a new terminal.
 
 ### Fixed
+- **Auto-Setup**: the model picker listed recommended models twice. Each model now appears once.
 - **Auto-Setup**: commands could be imported with the non-existent `deploy` icon and appear without an icon. Unknown icons now fall back to `terminal`.
 - **Terminals**: two commands with the same label shared one terminal, so running, focusing or stopping one affected the other. Terminals are now tracked per command.
 - **Command panel**: editing a command while the panel was already open showed the previously opened command. The panel now switches to the command you clicked.

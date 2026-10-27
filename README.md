@@ -53,7 +53,7 @@ Claude shows the commands it found and writes them to `.vscode/quickrun.json` on
 
 ### <img src="https://img.shields.io/badge/-%20-1a2233?logo=githubcopilot&logoColor=white" height="20" alt="GitHub Copilot" /> GitHub Copilot
 
-Open the `···` menu in the sidebar title bar and choose **Auto-Setup with GitHub Copilot** (or click **Auto-Setup from project** while the sidebar is empty), then pick a model. Later, **Check for New Commands with GitHub Copilot** in the same menu re-runs the analysis and shows only commands not yet in your sidebar.
+Open the `···` menu in the sidebar title bar and choose **Auto-Setup with GitHub Copilot**, then pick a model. Later, **Check for New Commands with GitHub Copilot** in the same menu re-runs the analysis and shows only commands not yet in your sidebar.
 
 > Requires the GitHub Copilot extension to be installed and signed in.
 
