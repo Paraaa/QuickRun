@@ -10,6 +10,7 @@ import { GroupItem } from './GroupItem';
 import { runAutoSetup } from './AutoSetup';
 import { GROUP_COLORS } from './utils';
 import { installClaudeSkill } from './InstallSkill';
+import { showWhatsNew, WHATS_NEW_STATE_KEYS } from './WhatsNew';
 
 const GROUP_COLOR_OPTIONS = [
   { label: '$(folder) Default', description: 'No color', value: undefined as string | undefined },
@@ -142,6 +143,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(...disposables);
   context.subscriptions.push(configLoader);
+
+  context.globalState.setKeysForSync(WHATS_NEW_STATE_KEYS);
+  // Not awaited: the notification must never delay activation.
+  void showWhatsNew(
+    context.globalState,
+    context.extension.packageJSON.version,
+    context.extensionUri,
+  );
 }
 
 export function deactivate() {}
