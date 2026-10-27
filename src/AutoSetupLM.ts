@@ -240,10 +240,14 @@ export async function selectModel(): Promise<vscode.LanguageModelChat | undefine
     };
   };
 
+  // Recommended models are listed once, at the top; everything else goes below the separator.
+  const others = models.filter((m) => !(m.family in MODEL_TIERS));
   const items: ModelPickItem[] = [
     ...known.map(toItem),
-    { kind: vscode.QuickPickItemKind.Separator, label: 'All available models' } as ModelPickItem,
-    ...models.map(toItem),
+    ...(known.length && others.length
+      ? [{ kind: vscode.QuickPickItemKind.Separator, label: 'Other models' } as ModelPickItem]
+      : []),
+    ...others.map(toItem),
   ];
 
   const picked = await vscode.window.showQuickPick(items, {

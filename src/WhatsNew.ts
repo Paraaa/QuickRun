@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 export const REPO_URL = 'https://github.com/Paraaa/QuickRun';
+export const CHANGELOG_URL = `${REPO_URL}/blob/main/CHANGELOG.md`;
 
 const LAST_VERSION_KEY = 'quickrun.lastVersion';
 const DISABLED_KEY = 'quickrun.whatsNewDisabled';
@@ -26,11 +27,7 @@ export function isFeatureUpdate(previous: string | undefined, current: string): 
   return curMajor > prevMajor || (curMajor === prevMajor && curMinor > prevMinor);
 }
 
-export async function showWhatsNew(
-  state: vscode.Memento,
-  version: string,
-  extensionUri: vscode.Uri,
-): Promise<void> {
+export async function showWhatsNew(state: vscode.Memento, version: string): Promise<void> {
   const previous = state.get<string>(LAST_VERSION_KEY);
   await state.update(LAST_VERSION_KEY, version);
 
@@ -46,15 +43,7 @@ export async function showWhatsNew(
   );
 
   if (choice === WHATS_NEW) {
-    try {
-      await vscode.commands.executeCommand(
-        'markdown.showPreview',
-        vscode.Uri.joinPath(extensionUri, 'CHANGELOG.md'),
-      );
-    } catch {
-      // Markdown preview unavailable (e.g. the built-in extension is disabled): fall back to GitHub.
-      await vscode.env.openExternal(vscode.Uri.parse(`${REPO_URL}/blob/main/CHANGELOG.md`));
-    }
+    await vscode.env.openExternal(vscode.Uri.parse(CHANGELOG_URL));
   } else if (choice === STAR) {
     await vscode.env.openExternal(vscode.Uri.parse(REPO_URL));
   } else if (choice === DONT_SHOW_AGAIN) {

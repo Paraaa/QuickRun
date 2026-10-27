@@ -146,11 +146,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.globalState.setKeysForSync(WHATS_NEW_STATE_KEYS);
   // Not awaited: the notification must never delay activation.
-  void showWhatsNew(
-    context.globalState,
-    context.extension.packageJSON.version,
-    context.extensionUri,
-  );
+  void showWhatsNew(context.globalState, context.extension.packageJSON.version);
 }
 
 export function deactivate() {}
