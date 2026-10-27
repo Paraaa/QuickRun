@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { CommandsProvider } from './CommandsProvider';
-import { CommandItem, focusTerminalForLabel, stopCommandForLabel } from './CommandItem';
+import { CommandItem, focusTerminalForCommand, stopCommand } from './CommandItem';
 import { CommandPanel } from './CommandPanel';
 import { runFromPalette } from './CommandPalette';
 import { CommandStore } from './CommandStore';
@@ -119,10 +119,9 @@ export async function activate(context: vscode.ExtensionContext) {
     'quickrun.deleteCommand': (commandItem: CommandItem) => commandStore.delete(commandItem.data),
 
     'quickrun.focusTerminal': (commandItem: CommandItem) =>
-      focusTerminalForLabel(commandItem.data.label),
+      focusTerminalForCommand(commandItem.data),
 
-    'quickrun.stopCommand': (commandItem: CommandItem) =>
-      stopCommandForLabel(commandItem.data.label),
+    'quickrun.stopCommand': (commandItem: CommandItem) => stopCommand(commandItem.data),
 
     'quickrun.runFromPalette': () => runFromPalette(commandStore),
 

@@ -15,8 +15,16 @@ export class CommandPanel {
     groupItem: GroupItem | undefined,
     onSubmit: (data: QuickRunCommand) => void,
   ): void {
-    if (CommandPanel.currentPanel) {
-      CommandPanel.currentPanel.panel.reveal();
+    const current = CommandPanel.currentPanel;
+    if (current) {
+      // Re-opening the same command keeps any unsaved input; anything else re-renders.
+      const sameCommand = existing
+        ? current.existing?.id === existing.id
+        : !current.existing && !groupItem;
+      if (!sameCommand) {
+        current.render(existing, groups, groupItem, onSubmit);
+      }
+      current.panel.reveal();
       return;
     }
     CommandPanel.currentPanel = new CommandPanel(
@@ -28,6 +36,9 @@ export class CommandPanel {
     );
   }
 
+  private existing: QuickRunCommand | undefined;
+  private onSubmit: (data: QuickRunCommand) => void;
+
   private constructor(
     private readonly extensionUri: vscode.Uri,
     existing: QuickRunCommand | undefined,
@@ -35,6 +46,8 @@ export class CommandPanel {
     groupItem: GroupItem | undefined,
     onSubmit: (data: QuickRunCommand) => void,
   ) {
+    this.existing = existing;
+    this.onSubmit = onSubmit;
     this.panel = vscode.window.createWebviewPanel(
       'quickrunAddCommand',
       existing ? 'Edit Command' : 'Add Command',
@@ -47,15 +60,15 @@ export class CommandPanel {
       },
     );
 
-    this.panel.webview.html = this.getHtml(this.panel.webview, groups, groupItem, existing);
+    this.render(existing, groups, groupItem, onSubmit);
 
     this.panel.webview.onDidReceiveMessage(
       (message) => {
         switch (message.type) {
           case 'submit': {
-            const id = existing ? existing.id : undefined;
-            onSubmit({
-              id: id ?? '',
+            const existing = this.existing;
+            this.onSubmit({
+              id: existing?.id ?? '',
               label: message.label,
               customCommand: message.customCommand,
               icon: message?.icon || 'play',
@@ -77,6 +90,18 @@ export class CommandPanel {
     );
 
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
+  }
+
+  private render(
+    existing: QuickRunCommand | undefined,
+    groups: QuickRunGroup[],
+    groupItem: GroupItem | undefined,
+    onSubmit: (data: QuickRunCommand) => void,
+  ): void {
+    this.existing = existing;
+    this.onSubmit = onSubmit;
+    this.panel.title = existing ? 'Edit Command' : 'Add Command';
+    this.panel.webview.html = this.getHtml(this.panel.webview, groups, groupItem, existing);
   }
 
   private dispose(): void {
@@ -127,21 +152,27 @@ export class CommandPanel {
     const selectedIcon = existing?.icon ?? 'play';
     const tmReuse = (existing?.terminalMode ?? 'reuse') === 'reuse';
 
+    // Roving tabindex: only the selected icon is a tab stop; arrow keys move within the grid.
     const iconGrid = ALLICONS.map(
       (name) => `
-      <div class="icon-item ${name === selectedIcon ? 'selected' : ''}"
+      <button type="button"
+           class="icon-item ${name === selectedIcon ? 'selected' : ''}"
+           role="option"
+           aria-selected="${name === selectedIcon}"
+           aria-label="${name}"
+           tabindex="${name === selectedIcon ? '0' : '-1'}"
            data-icon="${name}"
            title="${name}"
            onclick="selectIcon('${name}')">
         <i class="codicon codicon-${name}"></i>
-      </div>`,
+      </button>`,
     ).join('');
 
     const scopeField = !existing
       ? `
         <div class="field">
           <label>Save to</label>
-          <div class="pill-group">
+          <div class="pill-group" role="radiogroup" aria-label="Save to">
             <input type="radio" name="scope" id="scope-project" value="project" checked/>
             <label for="scope-project">Project</label>
             <input type="radio" name="scope" id="scope-global" value="global"/>
@@ -307,12 +338,19 @@ export class CommandPanel {
             justify-content: center;
             width: 32px;
             height: 32px;
+            padding: 0;
             border-radius: 3px;
             cursor: pointer;
             border: 1px solid transparent;
+            background: transparent;
+            color: inherit;
             font-size: 15px;
           }
           .icon-item:hover { background: var(--vscode-list-hoverBackground); }
+          .icon-item:focus-visible {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: -1px;
+          }
           .icon-item.selected {
             background: var(--vscode-list-activeSelectionBackground);
             color: var(--vscode-list-activeSelectionForeground);
@@ -321,12 +359,25 @@ export class CommandPanel {
 
           /* ── pill toggle (terminal / scope) ── */
           .pill-group {
+            position: relative;
             display: flex;
             border: 1px solid var(--vscode-input-border, transparent);
             border-radius: 2px;
             overflow: hidden;
           }
-          .pill-group input[type="radio"] { display: none; }
+          /* Visually hidden but still focusable, so arrow keys / Tab work. */
+          .pill-group input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+            margin: 0;
+            pointer-events: none;
+          }
+          .pill-group:focus-within {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: 1px;
+          }
           .pill-group label {
             flex: 1;
             display: flex;
@@ -409,7 +460,7 @@ export class CommandPanel {
 
           <div class="field">
             <label>Icon</label>
-            <button type="button" class="icon-trigger" id="icon-trigger" onclick="togglePicker()">
+            <button type="button" class="icon-trigger" id="icon-trigger" onclick="togglePicker()" aria-haspopup="listbox" aria-expanded="false">
               <i class="codicon codicon-${selectedIcon}" id="trigger-icon"></i>
               <span id="trigger-label">${selectedIcon}</span>
               <i class="codicon codicon-chevron-down chevron"></i>
@@ -418,7 +469,7 @@ export class CommandPanel {
               <div class="icon-search-wrap">
                 <input type="text" placeholder="Search icons…" oninput="filterIcons(this.value)" id="icon-search"/>
               </div>
-              <div class="icon-grid" id="icon-grid">${iconGrid}</div>
+              <div class="icon-grid" id="icon-grid" role="listbox" aria-label="Icons">${iconGrid}</div>
             </div>
             <input type="hidden" id="icon" value="${selectedIcon}"/>
           </div>
@@ -441,7 +492,7 @@ export class CommandPanel {
 
           <div class="field">
             <label>Terminal Behaviour</label>
-            <div class="pill-group">
+            <div class="pill-group" role="radiogroup" aria-label="Terminal behaviour">
               <input type="radio" name="terminalMode" id="tm-reuse" value="reuse" ${tmReuse ? 'checked' : ''} onchange="updateTerminalHint()"/>
               <label for="tm-reuse">Reuse terminal</label>
               <input type="radio" name="terminalMode" id="tm-new" value="new" ${!tmReuse ? 'checked' : ''} onchange="updateTerminalHint()"/>
@@ -462,8 +513,8 @@ export class CommandPanel {
         </div>
 
         <div class="actions">
-          <button class="btn-secondary" onclick="cancel()">Cancel</button>
-          <button class="btn-primary" onclick="submit()">${existing ? 'Save Changes' : 'Add Command'}</button>
+          <button type="button" class="btn-secondary" onclick="cancel()">Cancel</button>
+          <button type="button" class="btn-primary" onclick="submit()">${existing ? 'Save Changes' : 'Add Command'}</button>
         </div>
 
         <script>
@@ -482,26 +533,37 @@ export class CommandPanel {
 
           updateTerminalHint();
 
-          function togglePicker() {
+          function setPickerOpen(open) {
             const trigger = document.getElementById('icon-trigger');
-            const picker  = document.getElementById('icon-picker');
-            const opening = !picker.classList.contains('open');
-            picker.classList.toggle('open', opening);
-            trigger.classList.toggle('open', opening);
+            document.getElementById('icon-picker').classList.toggle('open', open);
+            trigger.classList.toggle('open', open);
+            trigger.setAttribute('aria-expanded', String(open));
+          }
+
+          function togglePicker() {
+            const opening = !document.getElementById('icon-picker').classList.contains('open');
+            setPickerOpen(opening);
             if (opening) {
               document.getElementById('icon-search').focus();
             }
           }
 
+          function closePicker() {
+            setPickerOpen(false);
+            document.getElementById('icon-trigger').focus();
+          }
+
           function selectIcon(name) {
-            document.querySelectorAll('.icon-item.selected').forEach(el => el.classList.remove('selected'));
-            const el = document.querySelector('[data-icon="' + name + '"]');
-            if (el) { el.classList.add('selected'); }
+            document.querySelectorAll('.icon-item').forEach(el => {
+              const selected = el.dataset.icon === name;
+              el.classList.toggle('selected', selected);
+              el.setAttribute('aria-selected', String(selected));
+              el.tabIndex = selected ? 0 : -1;
+            });
             document.getElementById('icon').value = name;
             document.getElementById('trigger-icon').className = 'codicon codicon-' + name;
             document.getElementById('trigger-label').textContent = name;
-            document.getElementById('icon-picker').classList.remove('open');
-            document.getElementById('icon-trigger').classList.remove('open');
+            closePicker();
           }
 
           function filterIcons(query) {
@@ -511,13 +573,74 @@ export class CommandPanel {
             });
           }
 
+          function visibleIcons() {
+            return Array.from(document.querySelectorAll('.icon-item'))
+              .filter(el => el.style.display !== 'none');
+          }
+
+          function focusIcon(el) {
+            document.querySelectorAll('.icon-item').forEach(i => { i.tabIndex = -1; });
+            el.tabIndex = 0;
+            el.focus();
+            el.scrollIntoView({ block: 'nearest' });
+          }
+
+          function gridColumns(items) {
+            if (items.length < 2) { return 1; }
+            const top = items[0].offsetTop;
+            const idx = items.findIndex(el => el.offsetTop !== top);
+            return idx === -1 ? items.length : idx;
+          }
+
+          // Down arrow in the search box jumps into the grid; Enter picks the first match.
+          document.getElementById('icon-search').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const first = visibleIcons()[0];
+              if (first) { selectIcon(first.dataset.icon); }
+            }
+            if (e.key === 'ArrowDown') {
+              const items = visibleIcons();
+              if (items.length) {
+                e.preventDefault();
+                focusIcon(items.find(el => el.classList.contains('selected')) || items[0]);
+              }
+            }
+          });
+
+          // Arrow keys / Home / End move focus within the grid; Enter/Space select (native button).
+          document.getElementById('icon-grid').addEventListener('keydown', e => {
+            const items = visibleIcons();
+            const idx = items.indexOf(document.activeElement);
+            if (idx === -1) { return; }
+            const cols = gridColumns(items);
+            let next = idx;
+            switch (e.key) {
+              case 'ArrowRight': next = idx + 1; break;
+              case 'ArrowLeft':  next = idx - 1; break;
+              case 'ArrowDown':  next = idx + cols; break;
+              case 'ArrowUp':
+                if (idx - cols < 0) {
+                  e.preventDefault();
+                  document.getElementById('icon-search').focus();
+                  return;
+                }
+                next = idx - cols;
+                break;
+              case 'Home': next = 0; break;
+              case 'End':  next = items.length - 1; break;
+              default: return;
+            }
+            e.preventDefault();
+            focusIcon(items[Math.max(0, Math.min(items.length - 1, next))]);
+          });
+
           // Close picker when clicking outside
           document.addEventListener('click', e => {
             const trigger = document.getElementById('icon-trigger');
             const picker  = document.getElementById('icon-picker');
             if (!trigger.contains(e.target) && !picker.contains(e.target)) {
-              picker.classList.remove('open');
-              trigger.classList.remove('open');
+              setPickerOpen(false);
             }
           });
 
@@ -571,11 +694,16 @@ export class CommandPanel {
 
           document.addEventListener('keydown', e => {
             const pickerOpen = document.getElementById('icon-picker').classList.contains('open');
-            if (e.key === 'Enter' && !pickerOpen) { submit(); }
+            // Enter submits only from the form's text inputs; buttons keep their native behaviour.
+            const t = e.target;
+            const isFormTextInput = t instanceof HTMLInputElement && t.type === 'text' && t.id !== 'icon-search';
+            if (e.key === 'Enter' && isFormTextInput) {
+              e.preventDefault();
+              submit();
+            }
             if (e.key === 'Escape') {
               if (pickerOpen) {
-                document.getElementById('icon-picker').classList.remove('open');
-                document.getElementById('icon-trigger').classList.remove('open');
+                closePicker();
               } else {
                 cancel();
               }

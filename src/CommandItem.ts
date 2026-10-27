@@ -4,7 +4,7 @@ import { QuickRunCommand } from './types';
 const runningCommands = new Set<string>(); // command ids currently executing
 const terminalCommandId = new Map<vscode.Terminal, string>();
 const busyTerminals = new Set<vscode.Terminal>();
-const managedTerminals = new Map<string, vscode.Terminal[]>();
+const managedTerminals = new Map<string, vscode.Terminal[]>(); // keyed by terminalKey()
 
 const _onDidChangeState = new vscode.EventEmitter<void>();
 export const onDidChangeTerminalState = _onDidChangeState.event;
@@ -13,16 +13,21 @@ export function isCommandRunning(id: string): boolean {
   return runningCommands.has(id);
 }
 
-export function focusTerminalForLabel(label: string): void {
-  const list = managedTerminals.get(label) ?? [];
+// Commands are tracked by id so two commands sharing a label get separate terminals. Commands without an id (e.g. hand-edited config) fall back to label.
+function terminalKey(data: QuickRunCommand): string {
+  return data.id || `label:${data.label}`;
+}
+
+export function focusTerminalForCommand(data: QuickRunCommand): void {
+  const list = managedTerminals.get(terminalKey(data)) ?? [];
   const open = list.find((t) => t.exitStatus === undefined);
   if (open) {
     open.show();
   }
 }
 
-export function stopCommandForLabel(label: string): void {
-  const list = managedTerminals.get(label) ?? [];
+export function stopCommand(data: QuickRunCommand): void {
+  const list = managedTerminals.get(terminalKey(data)) ?? [];
   const busy = list.find((t) => t.exitStatus === undefined && busyTerminals.has(t));
   if (busy) {
     busy.dispose();
@@ -44,12 +49,12 @@ function initTracking(): void {
       terminalCommandId.delete(t);
       _onDidChangeState.fire();
     }
-    for (const [label, list] of managedTerminals) {
+    for (const [key, list] of managedTerminals) {
       const idx = list.indexOf(t);
       if (idx !== -1) {
         list.splice(idx, 1);
         if (list.length === 0) {
-          managedTerminals.delete(label);
+          managedTerminals.delete(key);
         }
         break;
       }
@@ -103,9 +108,10 @@ export class CommandItem extends vscode.TreeItem {
     initTracking();
 
     const label = this.data.label;
+    const key = terminalKey(this.data);
     const commandId = this.data.id ?? '';
     const terminalMode = this.data.terminalMode ?? 'reuse';
-    const existing = managedTerminals.get(label) ?? [];
+    const existing = managedTerminals.get(key) ?? [];
 
     // If already running, just focus that terminal.
     const runningTerminal = existing.find(
@@ -124,10 +130,10 @@ export class CommandItem extends vscode.TreeItem {
     const terminal = freeTerminal ?? vscode.window.createTerminal(label);
 
     if (!freeTerminal) {
-      if (!managedTerminals.has(label)) {
-        managedTerminals.set(label, []);
+      if (!managedTerminals.has(key)) {
+        managedTerminals.set(key, []);
       }
-      managedTerminals.get(label)!.push(terminal);
+      managedTerminals.get(key)!.push(terminal);
     }
 
     busyTerminals.add(terminal);
