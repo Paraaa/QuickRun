@@ -101,6 +101,17 @@ export class CommandStore {
     this._onDidChange.fire();
   }
 
+  // Returns the id of the group with this label in this scope, creating it if it does not exist yet.
+  async findOrAddGroup(label: string, source: ConfigScope, color?: string): Promise<string> {
+    const existing = this.getGroups().find((g) => g.label === label && g.source === source);
+    if (existing?.id) {
+      return existing.id;
+    }
+    const id = crypto.randomUUID();
+    await this.addGroup({ id, label, source, color });
+    return id;
+  }
+
   async editGroup(id: string, data: Partial<QuickRunGroup>): Promise<void> {
     for (const bucket of [this.projectGroups, this.globalGroups]) {
       const index = bucket.findIndex((g) => g.id === id);
