@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import crypto from 'crypto';
 import { CommandStore } from './CommandStore';
 import { selectModel, analyseProject, SuggestedCommand, ICONS } from './AutoSetupLM';
 
@@ -77,17 +76,8 @@ async function importCommands(
   commandStore: CommandStore,
 ): Promise<void> {
   const groupIdMap = new Map<string, string>();
-  const existingGroups = commandStore.getGroups();
-
   for (const groupLabel of new Set(commands.map((c) => c.group))) {
-    const existing = existingGroups.find((g) => g.label === groupLabel && g.source === 'project');
-    if (existing?.id) {
-      groupIdMap.set(groupLabel, existing.id);
-    } else {
-      const id = crypto.randomUUID();
-      await commandStore.addGroup({ id, label: groupLabel, source: 'project' });
-      groupIdMap.set(groupLabel, id);
-    }
+    groupIdMap.set(groupLabel, await commandStore.findOrAddGroup(groupLabel, 'project'));
   }
 
   for (const command of commands) {

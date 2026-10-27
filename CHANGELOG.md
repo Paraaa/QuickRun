@@ -3,8 +3,10 @@
 ## [Unreleased]
 ### Added
 - **Claude Code skill**: new `QuickRun: Install Claude Code Skill` command installs a bundled `quickrun-setup` skill into `~/.claude/skills/` or the workspace's `.claude/skills/`. In Claude Code, the skill discovers the project's commands, asks for confirmation and merges them into `.vscode/quickrun.json`. You can re-run the skill to update the commands.
+- **Command panel**: create a group without leaving the panel. Choose *+ New group…* in the Group dropdown, enter a name and pick a color. The group is created when you save the command, in the same scope as the command.
 
 ### Changed
+- **Command panel**: redesigned in the style of VS Code's Settings editor, with a short explanation for every option. The command field now supports multi-line commands (Shift+Enter for a new line).
 - **Sidebar**: *Auto-Setup* and *Check for New Commands* (renamed to *Auto-Setup with GitHub Copilot* and *Check for New Commands with GitHub Copilot*) moved from the title bar into the `···` menu, after *Install Claude Code Skill*, to declutter the toolbar.
 - **Auto-Setup**: smarter command discovery — uses the project's package manager (pnpm/yarn/bun/uv/poetry), covers monorepo workspaces, Deno, `.vscode/tasks.json`, Ruby, PHP, Elixir, CMake and more, skips internal sub-step scripts, flags destructive commands in their notes, and opens long-running processes (dev servers, watchers) in a new terminal.
 

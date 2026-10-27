@@ -8,16 +8,16 @@ import { ConfigLoader } from './ConfigLoader';
 import { QuickRunCommand, ConfigScope } from './types';
 import { GroupItem } from './GroupItem';
 import { runAutoSetup } from './AutoSetup';
+import { GROUP_COLORS } from './utils';
 import { installClaudeSkill } from './InstallSkill';
 
 const GROUP_COLOR_OPTIONS = [
   { label: '$(folder) Default', description: 'No color', value: undefined as string | undefined },
-  { label: '$(folder) Red', description: '', value: 'charts.red' },
-  { label: '$(folder) Orange', description: '', value: 'charts.orange' },
-  { label: '$(folder) Yellow', description: '', value: 'charts.yellow' },
-  { label: '$(folder) Green', description: '', value: 'charts.green' },
-  { label: '$(folder) Blue', description: '', value: 'charts.blue' },
-  { label: '$(folder) Purple', description: '', value: 'charts.purple' },
+  ...GROUP_COLORS.map((c) => ({
+    label: `$(folder) ${c.name}`,
+    description: '',
+    value: c.value as string | undefined,
+  })),
 ];
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -34,6 +34,9 @@ export async function activate(context: vscode.ExtensionContext) {
     dragAndDropController: commandsProvider,
   });
   context.subscriptions.push(treeView);
+
+  const createGroup = (label: string, source: ConfigScope, color?: string) =>
+    commandStore.findOrAddGroup(label, source, color);
   const commands: Record<string, (...args: any[]) => void | Promise<void>> = {
     'quickrun.addCommand': (groupItem?: GroupItem) => {
       CommandPanel.open(
@@ -42,6 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
         commandStore.getGroups(),
         groupItem,
         (data: QuickRunCommand) => commandStore.add(data),
+        createGroup,
       );
     },
 
@@ -114,6 +118,7 @@ export async function activate(context: vscode.ExtensionContext) {
         commandStore.getGroups(),
         undefined,
         (data: QuickRunCommand) => commandStore.edit(commandItem.data.id, data),
+        createGroup,
       ),
 
     'quickrun.deleteCommand': (commandItem: CommandItem) => commandStore.delete(commandItem.data),

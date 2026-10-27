@@ -7,6 +7,16 @@ export function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;');
 }
 
+// Group folder colors (theme color ids), shared by the Add Group quick pick and the command panel.
+export const GROUP_COLORS = [
+  { name: 'Red', value: 'charts.red' },
+  { name: 'Orange', value: 'charts.orange' },
+  { name: 'Yellow', value: 'charts.yellow' },
+  { name: 'Green', value: 'charts.green' },
+  { name: 'Blue', value: 'charts.blue' },
+  { name: 'Purple', value: 'charts.purple' },
+];
+
 // All available codicons as a JS array
 export const ALLICONS = [
   'play',

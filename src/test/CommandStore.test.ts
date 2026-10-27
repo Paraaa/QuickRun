@@ -142,7 +142,11 @@ suite('CommandStore', () => {
       loader.projectCommands = [makeCmd({ id: 'p1', label: 'New' })];
       loader.fireExternalChange();
       await new Promise((r) => setTimeout(r, 20));
-      assert.strictEqual(changeCount, 1, 'Expected exactly one onDidChange after a single external event');
+      assert.strictEqual(
+        changeCount,
+        1,
+        'Expected exactly one onDidChange after a single external event',
+      );
     });
 
     test('external change does not reload global commands', async () => {
@@ -152,10 +156,7 @@ suite('CommandStore', () => {
       loader.fireExternalChange();
       await new Promise((r) => setTimeout(r, 20));
       // Global data is NOT reloaded on external project-file change
-      assert.strictEqual(
-        store.getAll().find((c) => c.source === 'global')?.label,
-        'GlobalCmd',
-      );
+      assert.strictEqual(store.getAll().find((c) => c.source === 'global')?.label, 'GlobalCmd');
     });
   });
 
@@ -335,7 +336,11 @@ suite('CommandStore', () => {
       await store.add(makeCmd({ label: 'ProjCmd', source: 'project' }));
       const id = store.getAll()[0].id!;
       await store.edit(id, makeCmd({ id, label: 'Changed', source: 'global' }));
-      assert.strictEqual(store.getAll()[0].label, 'ProjCmd', 'Cross-scope edit must not modify the command');
+      assert.strictEqual(
+        store.getAll()[0].label,
+        'ProjCmd',
+        'Cross-scope edit must not modify the command',
+      );
     });
 
     test('persists after a successful edit', async () => {
@@ -494,6 +499,53 @@ suite('CommandStore', () => {
   });
 
   // -------------------------------------------------------------------------
+  suite('findOrAddGroup()', () => {
+    test('creates a group with the given label, scope and color', async () => {
+      await store.load();
+      const id = await store.findOrAddGroup('Dev', 'project', 'charts.red');
+      const groups = store.getGroups();
+      assert.strictEqual(groups.length, 1);
+      assert.deepStrictEqual(
+        {
+          id: groups[0].id,
+          label: groups[0].label,
+          source: groups[0].source,
+          color: groups[0].color,
+        },
+        { id, label: 'Dev', source: 'project', color: 'charts.red' },
+      );
+    });
+
+    test('reuses an existing group with the same label in the same scope', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'Dev', source: 'project' }));
+      const id = await store.findOrAddGroup('Dev', 'project', 'charts.blue');
+      assert.strictEqual(id, 'g1');
+      assert.strictEqual(store.getGroups().length, 1);
+      assert.strictEqual(store.getGroups()[0].color, undefined);
+    });
+
+    test('does not reuse a same-named group from the other scope', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'Dev', source: 'global' }));
+      const id = await store.findOrAddGroup('Dev', 'project');
+      assert.notStrictEqual(id, 'g1');
+      assert.strictEqual(store.getGroups().length, 2);
+    });
+
+    test('does not persist or fire onDidChange when reusing', async () => {
+      await store.load();
+      await store.addGroup(makeGroup({ id: 'g1', label: 'Dev', source: 'project' }));
+      loader.savedProject = null;
+      let fired = false;
+      store.onDidChange(() => (fired = true));
+      await store.findOrAddGroup('Dev', 'project');
+      assert.strictEqual(loader.savedProject, null);
+      assert.ok(!fired);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   suite('deleteGroup()', () => {
     test('removes a project group when confirmed', async () => {
       await store.load();
@@ -527,7 +579,11 @@ suite('CommandStore', () => {
       await store.add(makeCmd({ label: 'Proj', groupId: 'g1', source: 'project' }));
       warnResult = 'Delete';
       await store.deleteGroup(store.getGroups().find((g) => g.source === 'global')!);
-      assert.strictEqual(store.getAll().length, 1, 'Project command must survive deletion of global group');
+      assert.strictEqual(
+        store.getAll().length,
+        1,
+        'Project command must survive deletion of global group',
+      );
       assert.strictEqual(store.getAll()[0].source, 'project');
     });
 
