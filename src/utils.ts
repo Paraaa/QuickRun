@@ -17,6 +17,20 @@ export const GROUP_COLORS = [
   { name: 'Purple', value: 'charts.purple' },
 ];
 
+// Shown as a row under "Icon" in the command panel; the full grid opens with "Show all".
+export const SUGGESTED_ICONS = [
+  'play',
+  'terminal',
+  'beaker',
+  'package',
+  'rocket',
+  'server',
+  'database',
+  'bug',
+  'tools',
+  'gear',
+];
+
 // All available codicons as a JS array
 export const ALLICONS = [
   'play',
