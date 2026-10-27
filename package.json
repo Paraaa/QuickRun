@@ -86,13 +86,17 @@
       },
       {
         "command": "quickrun.autoSetup",
-        "title": "QuickRun: Auto-Setup Project",
+        "title": "QuickRun: Auto-Setup with GitHub Copilot",
         "icon": "$(sparkle)"
       },
       {
         "command": "quickrun.autoSetupRecheck",
-        "title": "QuickRun: Check for New Commands",
+        "title": "QuickRun: Check for New Commands with GitHub Copilot",
         "icon": "$(sync)"
+      },
+      {
+        "command": "quickrun.installClaudeSkill",
+        "title": "QuickRun: Install Claude Code Skill"
       }
     ],
     "viewsContainers": {
@@ -181,12 +185,17 @@
         {
           "command": "quickrun.autoSetup",
           "when": "view == quickrunPanel",
-          "group": "navigation@4"
+          "group": "1_setup@2"
         },
         {
           "command": "quickrun.autoSetupRecheck",
           "when": "view == quickrunPanel",
-          "group": "navigation@5"
+          "group": "1_setup@3"
+        },
+        {
+          "command": "quickrun.installClaudeSkill",
+          "when": "view == quickrunPanel",
+          "group": "1_setup@1"
         }
       ],
       "view/item/context": [

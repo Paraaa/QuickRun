@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import crypto from 'crypto';
 import { CommandStore } from './CommandStore';
-import { selectModel, analyseProject, SuggestedCommand } from './AutoSetupLM';
+import { selectModel, analyseProject, SuggestedCommand, ICONS } from './AutoSetupLM';
 
 export async function runAutoSetup(commandStore: CommandStore, recheckMode = false): Promise<void> {
   // Must happen before withProgress. Consent dialog cannot appear behind a progress notification
@@ -94,8 +94,9 @@ async function importCommands(
     await commandStore.add({
       label: command.label,
       customCommand: command.customCommand,
-      icon: command.icon,
+      icon: command.icon && ICONS.includes(command.icon) ? command.icon : 'terminal',
       notes: command.notes ?? undefined,
+      terminalMode: command.terminalMode === 'new' ? 'new' : undefined,
       groupId: groupIdMap.get(command.group),
       source: 'project',
     });

@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+### Added
+- **Claude Code skill**: new `QuickRun: Install Claude Code Skill` command installs a bundled `quickrun-setup` skill into `~/.claude/skills/` or the workspace's `.claude/skills/`. In Claude Code, the skill discovers the project's commands, asks for confirmation and merges them into `.vscode/quickrun.json`. You can re-run the skill to update the commands.
+
+### Changed
+- **Sidebar**: *Auto-Setup* and *Check for New Commands* (renamed to *Auto-Setup with GitHub Copilot* and *Check for New Commands with GitHub Copilot*) moved from the title bar into the `···` menu, after *Install Claude Code Skill*, to declutter the toolbar.
+- **Auto-Setup**: smarter command discovery — uses the project's package manager (pnpm/yarn/bun/uv/poetry), covers monorepo workspaces, Deno, `.vscode/tasks.json`, Ruby, PHP, Elixir, CMake and more, skips internal sub-step scripts, flags destructive commands in their notes, and opens long-running processes (dev servers, watchers) in a new terminal.
+
+### Fixed
+- **Auto-Setup**: commands could be imported with the non-existent `deploy` icon and appear without an icon. Unknown icons now fall back to `terminal`.
+
 
 ## [1.0.0] - 2026-04-25
 ### Added

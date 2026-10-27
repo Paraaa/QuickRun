@@ -6,9 +6,37 @@ export interface SuggestedCommand {
   group: string;
   icon?: string;
   notes?: string | null;
+  terminalMode?: 'reuse' | 'new';
 }
 
-const GOAL_PROMPT = `You are helping configure a developer tool called QuickRun — a VS Code sidebar
+export const ICONS = [
+  'terminal',
+  'play',
+  'gear',
+  'beaker',
+  'bug',
+  'rocket',
+  'server',
+  'database',
+  'cloud',
+  'cloud-upload',
+  'git-branch',
+  'package',
+  'zap',
+  'tools',
+  'file',
+  'folder',
+  'refresh',
+  'stop-circle',
+  'run',
+  'symbol-event',
+  'wrench',
+  'repo',
+  'shield',
+  'code',
+];
+
+export const GOAL_PROMPT = `You are helping configure a developer tool called QuickRun — a VS Code sidebar
 that holds shell commands a developer runs frequently.
 
 Your job is to do an EXHAUSTIVE search of the current workspace and suggest
@@ -18,17 +46,28 @@ likely source of runnable commands.
 
 Search the following locations and file types (read each one you find):
 - package.json (scripts section)
+- Monorepo workspaces: pnpm-workspace.yaml, the "workspaces" field of
+  package.json, turbo.json, nx.json, lerna.json — then read the package.json
+  of every workspace package as well
+- deno.json / deno.jsonc (tasks section)
 - Makefile / makefile
 - Taskfile.yml / Taskfile.yaml
 - justfile / Justfile
-- docker-compose.yml / docker-compose.yaml / compose.yml
+- .vscode/tasks.json
+- docker-compose.yml / docker-compose.yaml / compose.yml / compose.yaml
 - Dockerfile (detect presence → suggest build/run commands)
+- .devcontainer/devcontainer.json
+- Procfile
 - Any *.sh or *.bash files in the root or a scripts/ directory
-- pyproject.toml, setup.py (Python projects)
-- Cargo.toml (Rust projects)
-- go.mod (Go projects)
-- build.gradle / gradlew (Gradle projects)
-- pom.xml (Maven projects)
+- Python: pyproject.toml (incl. [tool.poetry.scripts], [project.scripts],
+  [tool.uv], [tool.pytest]), setup.py, tox.ini, noxfile.py, manage.py
+- Rust: Cargo.toml
+- Go: go.mod
+- Java/Kotlin: build.gradle / build.gradle.kts / gradlew, pom.xml / mvnw
+- Ruby: Gemfile, Rakefile
+- PHP: composer.json (scripts section)
+- Elixir: mix.exs
+- C/C++: CMakeLists.txt
 - .env.example or README.md for hints about how to run the project
 - Any CI configuration (e.g. .github/workflows/*.yml) for clues about
   standard build/test/deploy commands used in the project
@@ -36,9 +75,22 @@ Search the following locations and file types (read each one you find):
 Do not stop until you have read every file from the list above that exists.
 Only return results when you are confident you have found everything.
 
-Skip: internal lifecycle hooks (e.g. "postinstall", "prepare"), and commands
-that require manual secret substitution to work (e.g. placeholders like
-YOUR_TOKEN_HERE in the command string).
+Use the project's own tooling:
+- Detect the package manager from the lockfile and use it consistently:
+  pnpm-lock.yaml → "pnpm <script>", yarn.lock → "yarn <script>",
+  bun.lock / bun.lockb → "bun run <script>", package-lock.json or none →
+  "npm run <script>" ("npm test" / "npm start" are fine).
+- Likewise for Python: uv.lock → "uv run ...", poetry.lock → "poetry run ...".
+- Invoke scripts and targets through their runner (e.g. "npm run build",
+  "make test", "just lint"). Never inline the body of a script or target.
+
+Skip:
+- Internal lifecycle hooks (e.g. "postinstall", "prepare", "pretest").
+- Sub-steps that only exist to be called by another script (e.g. "build:css"
+  when "build" already runs it), unless a developer would plausibly run them
+  on their own.
+- Commands that require manual secret substitution to work (e.g. placeholders
+  like YOUR_TOKEN_HERE in the command string).
 Include: setup and install scripts — these are useful for developers who are
 new to the project and need to get it running quickly.
 
@@ -48,17 +100,23 @@ Rules for the output:
   Deploy, Scripts. Only use a new group name if none of those fit.
 - Multiple commands can share the same group — they will be grouped together
   in the sidebar.
-- Pick an appropriate "icon" for each command from this list of VS Code codicon
-  names: terminal, play, gear, beaker, bug, rocket, server, database, cloud,
-  git-branch, package, zap, tools, file, folder, refresh, stop-circle, run,
-  symbol-event, wrench, repo, deploy, shield, code.
+- Pick an "icon" for each command ONLY from this list of VS Code codicon
+  names: ${ICONS.join(', ')}.
+  If none fits, use "terminal".
 - If a command must be run from a subdirectory, wrap it in a subshell so it
   always works from the workspace root:
   "(cd ./subdir && the-command)"
   Never emit a bare "cd" — it would move the terminal permanently and break
   every subsequent run.
+- Set "terminalMode" to "new" for long-running processes that never exit on
+  their own (dev servers, watchers, "docker compose up" without -d, log
+  tailing). Omit it for everything else.
 - Add a "notes" field (one sentence) only if the command's purpose is not
   obvious from its label. Otherwise set it to null.
+- If a command is destructive or affects shared environments (dropping or
+  resetting a database, deploying to production, "terraform apply", deleting
+  data), still include it but start its "notes" with "⚠️ Destructive:" followed
+  by what it does.
 - Return ONLY a valid JSON array when you are done. No explanation, no markdown
   fences.
 
@@ -69,6 +127,7 @@ Example output (illustrating multiple commands per group):
     "customCommand": "npm run dev",
     "group": "Dev",
     "icon": "play",
+    "terminalMode": "new",
     "notes": null
   },
   {
